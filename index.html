@@ -1,0 +1,1120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Summer Camp Rally</title>
+<meta name="description" content="Green tribe Summer Camp rally tracker for RDG leaders">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A2419">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Summer Camp">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preload" href="fonts/display-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/text-500.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* ---------- fonts, bundled with the app so it opens fast and works offline ---------- */
+@font-face{font-family:"Display";src:url(fonts/display-800.woff2) format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Display";src:url(fonts/display-700.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Text";src:url(fonts/text-400.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Text";src:url(fonts/text-500.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Text";src:url(fonts/text-600.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Text";src:url(fonts/text-700.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Accent";src:url(fonts/accent-italic.woff2) format("woff2");font-style:italic;font-weight:400;font-display:swap}
+
+:root{
+  --bg:#0A2419; --bg-2:#0D2C1F; --card:#123726; --card-2:#17422F; --card-3:#1D4E38;
+  --line:rgba(236,248,226,.09); --line-2:rgba(236,248,226,.16);
+  --ink:#F2F7EC; --muted:#9DB6A7; --faint:#6E8B7B;
+  --lime:#D4F53C; --lime-2:#BFE62A; --lime-ink:#0A2419;
+  --mint:#6FD08C; --cream:#F6EEDC; --cream-ink:#173A2A; --orange:#F39A3A;
+  --danger:#FF8A70;
+  --r-xl:28px; --r:22px; --r-s:14px;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --display:"Display","Arial Black",system-ui,sans-serif;
+  --text:"Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --accent:"Accent",Georgia,serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--text);font-size:15px;line-height:1.4;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--lime);outline-offset:2px;border-radius:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.ico{width:22px;height:22px;flex:none;display:block}
+.muted{color:var(--muted)}
+.serif{font-family:var(--accent);font-style:italic;font-weight:400;letter-spacing:0}
+
+/* ---------- shell ---------- */
+#app{min-height:100%}
+main{padding:0 16px calc(var(--sab) + 120px);max-width:560px;margin:0 auto}
+.hdr{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:10px;padding:calc(var(--sat) + 16px) 16px 14px;max-width:560px;margin:0 auto}
+.hdr .who{text-align:center;line-height:1.25}
+.hdr .hello{font-weight:700;font-size:16px}
+.hdr .today{color:var(--muted);font-size:13.5px;font-weight:500}
+.hdr h1{margin:0;font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--card-2);color:var(--lime);font-family:var(--display);font-weight:800;font-size:15px;position:relative}
+.avatar::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px dashed var(--lime);opacity:.7}
+.circle-btn{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line-2);color:var(--ink)}
+
+/* profile icons */
+.avatar.has{background:transparent;overflow:visible}
+.avatar.has svg,.ini.has svg,.stack span.has svg{border-radius:50%}
+.ini.has{background:transparent!important;overflow:hidden}
+.stack span.has{background:transparent;overflow:hidden}
+.avgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.avgrid button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:18px;border:2px solid transparent;font-size:12px;font-weight:600;color:var(--muted)}
+.avgrid button[aria-pressed="true"]{border-color:var(--lime);background:var(--card);color:var(--ink)}
+.avgrid .initsel{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--card-3);color:var(--lime);font-family:var(--display);font-weight:800;font-size:20px}
+
+/* bottom navigation: floating pill */
+.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 14px);z-index:30;width:min(400px,calc(100% - 32px));height:68px;border-radius:999px;background:#051710;border:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-around;padding:0 8px;box-shadow:0 14px 40px rgba(0,0,0,.45)}
+.nav button{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;color:#CFE0D5;position:relative}
+.nav button[aria-current="page"]{background:var(--lime);color:var(--lime-ink)}
+.nav button .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.nav .dot{position:absolute;top:10px;right:11px;width:8px;height:8px;border-radius:50%;background:var(--orange);border:2px solid #051710}
+
+/* ---------- home ---------- */
+.hero{position:relative;overflow:hidden;background:var(--lime);color:var(--lime-ink);border-radius:var(--r-xl);padding:22px 20px 20px;min-height:200px}
+.hero h2{margin:0;font-family:var(--display);font-weight:800;font-size:40px;line-height:.95;letter-spacing:-.035em;max-width:60%;position:relative;z-index:1}
+.hero h2 .serif{display:block;font-size:26px;line-height:1.05;letter-spacing:-.01em;margin-top:6px}
+.hero .when{margin-top:10px;font-weight:600;font-size:13.5px;max-width:56%;position:relative;z-index:1}
+.hero .patch{position:absolute;right:-34px;top:8px;width:178px;height:178px;transform:rotate(9deg);filter:drop-shadow(0 10px 18px rgba(10,36,25,.35))}
+.hero .foot{position:relative;z-index:1}
+.hero .foot{display:flex;align-items:center;gap:10px;margin-top:16px}
+.stack{display:flex}
+.stack span{width:32px;height:32px;border-radius:50%;margin-left:-9px;display:grid;place-items:center;font-size:11px;font-weight:700;border:2.5px solid var(--lime);background:var(--lime-ink);color:var(--lime)}
+.stack span:first-child{margin-left:0}
+.stack span.more{background:var(--cream);color:var(--cream-ink)}
+.count-pill{background:var(--lime-ink);color:var(--lime);font-weight:700;font-size:12.5px;padding:7px 12px;border-radius:999px;white-space:nowrap}
+
+/* RDG pills, like day pickers */
+.pills{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin:14px 0 4px}
+.pills.six{grid-template-columns:repeat(6,1fr)}
+.dpill{border:1.5px solid var(--line-2);border-radius:999px;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:1px;background:transparent;min-width:0}
+.dpill .dt{width:6px;height:6px;border-radius:50%;background:transparent;margin-bottom:4px}
+.dpill .dt.on{background:var(--lime)}
+.dpill .dt.warn{background:var(--orange)}
+.dpill .k{font-size:11.5px;color:var(--muted);font-weight:600}
+.dpill .n{font-family:var(--display);font-weight:800;font-size:17px;line-height:1.1}
+.dpill .f{font-size:10.5px;color:var(--faint);font-weight:600;margin-top:2px}
+.dpill[aria-current="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.dpill[aria-current="true"] .k,.dpill[aria-current="true"] .f{color:#3E5A4B}
+.dpill.lead .n{font-size:14px;margin-top:3px}
+
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:26px 2px 12px}
+.sec h3{margin:0;font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.sec .link{color:var(--lime);font-weight:600;font-size:13.5px}
+
+.cards{display:grid;grid-template-columns:1.1fr 1fr;gap:10px}
+.card{border-radius:var(--r);padding:16px;position:relative;overflow:hidden;text-align:left;display:block;width:100%}
+.card .tag{display:inline-block;align-self:flex-start;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(10,36,25,.12)}
+.card .big{font-family:var(--display);font-weight:800;font-size:44px;line-height:1;letter-spacing:-.03em;margin-top:14px}
+.card .big small{font-family:var(--text);font-size:15px;font-weight:600;letter-spacing:0;opacity:.75;margin-left:4px}
+.card .cap{font-weight:600;font-size:13.5px;margin-top:6px}
+.card.mint{background:var(--mint);color:#0A2419;grid-row:span 2;display:flex;flex-direction:column}
+.card.mint .ring{margin-top:auto;padding-top:14px}
+.card.cream{background:var(--cream);color:var(--cream-ink)}
+.card.cream .big{font-size:30px;margin-top:10px}
+.card.dark{background:var(--card);border:1px solid var(--line)}
+.quickrow{display:flex;gap:10px;justify-content:space-between}
+.quickrow button{flex:1;height:52px;border-radius:16px;background:var(--card-3);color:var(--lime);display:grid;place-items:center}
+.quickrow button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.prog{height:10px;border-radius:999px;background:rgba(10,36,25,.18);overflow:hidden}
+.prog i{display:block;height:100%;background:#0A2419;border-radius:999px}
+
+.chase{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:10px;width:100%;text-align:left}
+.chase .txt{flex:1;min-width:0}
+.chase b{display:block;font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.01em}
+.chase .s{color:var(--muted);font-size:13.5px;font-weight:500}
+.chase .badge{width:58px;height:58px;border-radius:18px;background:var(--lime);color:var(--lime-ink);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:24px;flex:none}
+.chase .badge.warn{background:var(--orange)}
+.steps{display:flex;gap:5px;margin-top:8px;align-items:center}
+.steps i{width:7px;height:7px;border-radius:50%;background:var(--line-2)}
+.steps i.on{background:var(--lime)}
+
+/* ---------- groups list ---------- */
+.pulse{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.pulse .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.pulse .head h2{margin:0;font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.02em;line-height:1.15}
+.pulse .head h2 .serif{display:block;font-size:15px;color:var(--muted);margin-top:2px}
+.pulse .head .big{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.03em;line-height:1;color:var(--lime);text-align:right;white-space:nowrap}
+.pulse .head .big small{display:block;font-family:var(--text);font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:0;margin-top:4px}
+.bar{display:flex;height:14px;border-radius:999px;overflow:hidden;margin:14px 0;background:var(--card-3)}
+.bar span{display:block;height:100%;transition:width .35s ease}
+.legend{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 11px 7px 9px;border-radius:999px;border:1.5px solid var(--line-2);font-size:12.5px;font-weight:600;color:var(--ink)}
+.chip i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.chip b{font-weight:700}
+.chip[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#0A2419}
+.chip[aria-pressed="true"] i{background:#0A2419}
+
+.search{display:flex;gap:8px;margin:14px 0 12px}
+.search input{flex:1;height:50px;border-radius:999px;border:1.5px solid var(--line-2);background:var(--bg-2);padding:0 18px;font-size:15px;min-width:0}
+.search input::placeholder{color:var(--faint)}
+.btn{height:50px;padding:0 20px;border-radius:999px;background:var(--lime);color:var(--lime-ink);font-weight:700;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid transparent}
+.btn.secondary{background:transparent;color:var(--ink);border-color:var(--line-2)}
+.btn.round{width:50px;padding:0;flex:none}
+.btn.small{height:38px;padding:0 14px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:default}
+
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.panel + .panel{margin-top:12px}
+.panel .ph{padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.panel .ph h3{margin:0;font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:-.01em}
+.panel .ph .muted{font-size:12.5px;font-weight:600}
+.person{display:flex;width:100%;text-align:left;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+.person:active{background:var(--card-2)}
+.person .ini{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--card-3);color:var(--ink);font-weight:700;font-size:13px}
+.person .who{flex:1;min-width:0}
+.person .name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.new{font-size:10.5px;font-weight:700;color:var(--lime-ink);background:var(--lime);padding:2px 7px;border-radius:999px}
+.person .meta{font-size:12.5px;color:var(--muted);margin-top:2px;display:flex;flex-direction:column;gap:2px}
+.person .meta .nt{font-family:var(--accent);font-style:italic;font-size:14.5px;line-height:1.25;color:#C9DACF}
+.pill{flex:none;font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;background:var(--bgc);color:var(--c);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+.pill .amt{font-weight:600;opacity:.85}
+.empty{padding:28px 16px;text-align:center;color:var(--muted);font-weight:500}
+
+/* ---------- reports ---------- */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px}
+.tile .v{font-family:var(--display);font-weight:800;font-size:28px;line-height:1;color:var(--c);letter-spacing:-.02em}
+.tile .l{font-size:12px;font-weight:600;color:var(--muted);margin-top:6px}
+.tile .x{font-size:12px;font-weight:700;color:var(--ink);margin-top:2px}
+.rdgrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line)}
+.rdgrow .lbl{width:78px;font-weight:600;font-size:13.5px;flex:none}
+.rdgrow .mini{flex:1;height:10px;border-radius:999px;background:var(--card-3);display:flex;overflow:hidden}
+.rdgrow .mini span{height:100%}
+.rdgrow .cnt{width:64px;text-align:right;font-size:12.5px;font-weight:600;color:var(--muted);flex:none}
+.line{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--line);font-size:14px}
+.line .l{font-weight:600}
+.line .r{font-weight:700;white-space:nowrap}
+.line .s{display:block;font-size:12.5px;color:var(--muted);font-weight:500}
+.line.over .r{color:var(--danger)}
+.sumtxt{white-space:pre-wrap;font-size:13px;background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.seg{display:inline-flex;background:var(--bg-2);border:1.5px solid var(--line-2);border-radius:999px;padding:4px;gap:4px;flex-wrap:wrap}
+.seg button{padding:8px 14px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--lime);color:var(--lime-ink)}
+
+/* ---------- sheets ---------- */
+.scrim{position:fixed;inset:0;background:rgba(2,12,7,.6);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg-2);width:100%;max-width:560px;max-height:92vh;max-height:92dvh;border-radius:28px 28px 0 0;padding:10px 18px calc(var(--sab) + 18px);overflow:auto;animation:up .22s ease-out;border-top:1px solid var(--line-2)}
+@keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line-2);margin:0 auto 14px}
+.sheet h2{margin:0;font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sheet .sub{color:var(--muted);font-size:13.5px;font-weight:500;margin-top:3px}
+.sheet section{margin-top:18px}
+.sheet h4{margin:0 0 9px;font-size:13px;font-weight:600;color:var(--muted)}
+.contact-row{display:flex;gap:8px;flex-wrap:wrap}
+.contact-row a{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:999px;background:var(--card-2);text-decoration:none;font-weight:600;font-size:13px}
+.contact-row a.wa{background:var(--lime);color:var(--lime-ink)}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{display:flex;align-items:center;gap:10px;padding:13px;border-radius:16px;border:1.5px solid var(--line-2);font-weight:600;font-size:14px;text-align:left}
+.opt i{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none}
+.opt[aria-checked="true"]{border-color:var(--c);background:var(--bgc);color:var(--c)}
+.field{margin-top:12px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field input,.field textarea,.field select{width:100%;border:1.5px solid var(--line-2);border-radius:16px;background:var(--bg);padding:13px 14px;font-size:15px}
+.field textarea{min-height:84px;resize:vertical}
+.quick{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.quick button{padding:7px 12px;border-radius:999px;background:var(--card-2);color:var(--lime);font-weight:600;font-size:12.5px}
+.notes{display:flex;flex-direction:column;gap:8px}
+.note{background:var(--card);border-radius:16px;padding:11px 13px;font-family:var(--accent);font-style:italic;font-size:16px;line-height:1.35}
+.note .by{font-family:var(--text);font-style:normal;font-size:12px;color:var(--muted);font-weight:600;margin-top:5px}
+.actions{display:flex;gap:10px;margin-top:20px}
+.actions .btn{flex:1}
+.menu{display:flex;flex-direction:column}
+.menu button{display:flex;justify-content:space-between;align-items:center;padding:15px 4px;border-bottom:1px solid var(--line);font-weight:600;text-align:left;width:100%}
+.menu button:last-child{border-bottom:0}
+.menu button span.muted{font-weight:500;font-size:13px}
+.status-line{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 96px);background:var(--cream);color:var(--cream-ink);font-weight:700;font-size:13px;padding:10px 16px;border-radius:999px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px);text-align:center}
+.status-line.show{opacity:1}
+.status-line.err{background:var(--danger);color:#2A0B04}
+.banner{display:block;width:100%;text-align:left;background:#3A2C0B;color:#FFD98A;font-weight:600;font-size:13px;padding:12px 16px;border-radius:16px;margin-bottom:12px}
+.banner.update{background:var(--lime);color:var(--lime-ink);display:flex;justify-content:space-between;align-items:center;gap:10px}
+
+/* ---------- sign in ---------- */
+.signin{max-width:460px;margin:0 auto;padding:calc(var(--sat) + 28px) 18px calc(var(--sab) + 28px)}
+.signin .patch{width:168px;height:168px;display:block;margin:0 auto 6px;transform:rotate(-6deg);filter:drop-shadow(0 12px 22px rgba(0,0,0,.4))}
+.signin .mark{text-align:center;font-family:var(--display);font-weight:800;font-size:38px;letter-spacing:-.035em;line-height:1}
+.signin .mark .serif{display:block;font-size:26px;color:var(--lime);margin-top:4px}
+.signin .lead{color:var(--muted);font-weight:500;margin:14px 0 22px;text-align:center}
+.grp{margin-top:20px}
+.grp h3{margin:0 0 9px;font-size:13px;font-weight:600;color:var(--muted)}
+.names{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.names button{padding:14px;border-radius:18px;background:var(--card);border:1.5px solid var(--line);font-weight:600;text-align:left;font-size:14px;display:flex;align-items:center;gap:10px;min-width:0}
+.names button .ini{width:30px;height:30px;border-radius:50%;background:var(--card-3);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--lime);flex:none}
+.names button.admin{border-color:rgba(212,245,60,.45)}
+.pin{display:flex;margin:18px 0 6px}
+.pin input{flex:1;height:64px;border-radius:20px;border:1.5px solid var(--line-2);background:var(--bg-2);font-size:30px;letter-spacing:.5em;text-align:center;font-weight:700;font-family:var(--display)}
+.err{color:var(--danger);font-weight:600;font-size:13.5px;margin-top:10px}
+@media (max-width:360px){.pills{gap:4px}.dpill .k{font-size:10.5px}.hero h2{font-size:34px}.hero .patch{width:160px;height:160px}}
+@media (min-width:520px){.options{grid-template-columns:repeat(3,1fr)}.tiles{grid-template-columns:repeat(6,1fr)}}
+</style>
+</head>
+<body>
+<div id="app" aria-live="polite"></div>
+<div id="toast" class="status-line" role="status"></div>
+<script src="config.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* ------------------------------------------------------------------ */
+/* Constants                                                           */
+/* ------------------------------------------------------------------ */
+
+var STATUS = [
+  { code: 'bought',     label: 'Ticket bought',     short: 'Bought',      c: '#D4F53C', bg: 'rgba(212,245,60,.15)' },
+  { code: 'looking',    label: 'Looking to buy',    short: 'Looking',     c: '#7CC8FF', bg: 'rgba(124,200,255,.15)' },
+  { code: 'confirming', label: 'Confirming',        short: 'Confirming',  c: '#FFC14D', bg: 'rgba(255,193,77,.15)' },
+  { code: 'sponsor',    label: 'Needs sponsorship', short: 'Sponsorship', c: '#C7A6FF', bg: 'rgba(199,166,255,.16)' },
+  { code: 'no',         label: 'Not coming',        short: 'Not coming',  c: '#FF8A70', bg: 'rgba(255,138,112,.15)' },
+  { code: 'none',       label: 'Not yet asked',     short: 'Not asked',   c: '#9DB6A7', bg: 'rgba(157,182,167,.13)' }
+];
+var ST = {}; STATUS.forEach(function (s) { ST[s.code] = s; });
+
+/* Grades are the grade each young person will be in at camp (2027), one up from this year. */
+var RDGS = [
+  { code: 'B10', label: 'Boys 10',  long: 'Boys, Grade 10 in 2027 (Grade 9 this year)' },
+  { code: 'B11', label: 'Boys 11',  long: 'Boys, Grade 11 in 2027 (Grade 10 this year)' },
+  { code: 'B12', label: 'Boys 12',  long: 'Boys, Grade 12 in 2027 (Grade 11 this year)' },
+  { code: 'G10', label: 'Girls 10', long: 'Girls, Grade 10 in 2027 (Grade 9 this year)' },
+  { code: 'G11', label: 'Girls 11', long: 'Girls, Grade 11 in 2027 (Grade 10 this year)' },
+  { code: 'G12', label: 'Girls 12', long: 'Girls, Grade 12 in 2027 (Grade 11 this year)' }
+];
+var RDG = {}; RDGS.forEach(function (r) { RDG[r.code] = r; });
+
+/* Original cartoon camp critters for leader profile icons. Each is a 64x64 SVG body (no outer <svg>). */
+var AVATARS = (function () {
+  var E = function (x, y, r) { // eye with a sparkle
+    r = r || 4.2;
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#13241B"/><circle cx="' + (x + r * 0.35) + '" cy="' + (y - r * 0.35) + '" r="' + (r * 0.34) + '" fill="#fff"/>';
+  };
+  var blush = '<ellipse cx="18" cy="42" rx="4.5" ry="2.6" fill="#FF8FA3" opacity=".55"/><ellipse cx="46" cy="42" rx="4.5" ry="2.6" fill="#FF8FA3" opacity=".55"/>';
+  var smile = function (y, w) { y = y || 44; w = w || 5; return '<path d="M' + (32 - w) + ' ' + y + ' Q32 ' + (y + w * 0.9) + ' ' + (32 + w) + ' ' + y + '" stroke="#13241B" stroke-width="2.2" fill="none" stroke-linecap="round"/>'; };
+  return [
+    { id: 'fox', name: 'Fox', bg: '#D4F53C', svg:
+      '<path d="M12 14 L24 26 L14 32 Z" fill="#E8742C"/><path d="M52 14 L40 26 L50 32 Z" fill="#E8742C"/><path d="M15 18 L22 26 L16 29 Z" fill="#2A1A12"/><path d="M49 18 L42 26 L48 29 Z" fill="#2A1A12"/>' +
+      '<path d="M32 22 C46 22 54 32 54 40 C54 48 44 54 32 54 C20 54 10 48 10 40 C10 32 18 22 32 22 Z" fill="#F08A3A"/>' +
+      '<path d="M32 40 C38 40 48 42 50 46 C46 52 40 54 32 54 C24 54 18 52 14 46 C16 42 26 40 32 40 Z" fill="#FFF4E4"/>' +
+      E(24, 37) + E(40, 37) + '<ellipse cx="32" cy="44" rx="3.6" ry="2.6" fill="#2A1A12"/>' + smile(48, 3) },
+    { id: 'bear', name: 'Bear', bg: '#6FD08C', svg:
+      '<circle cx="16" cy="19" r="7" fill="#8A5A3B"/><circle cx="48" cy="19" r="7" fill="#8A5A3B"/><circle cx="16" cy="19" r="3.5" fill="#E9B98F"/><circle cx="48" cy="19" r="3.5" fill="#E9B98F"/>' +
+      '<circle cx="32" cy="36" r="20" fill="#9C6A47"/><ellipse cx="32" cy="44" rx="10" ry="7.5" fill="#E9C9A2"/>' +
+      E(24, 33) + E(40, 33) + '<ellipse cx="32" cy="40.5" rx="3.8" ry="2.8" fill="#2A1A12"/>' + smile(45, 3.5) },
+    { id: 'owl', name: 'Owl', bg: '#F6EEDC', svg:
+      '<path d="M14 14 L22 22 L14 26 Z" fill="#6E5236"/><path d="M50 14 L42 22 L50 26 Z" fill="#6E5236"/>' +
+      '<path d="M32 16 C48 16 54 28 54 38 C54 50 44 56 32 56 C20 56 10 50 10 38 C10 28 16 16 32 16 Z" fill="#8C6A45"/>' +
+      '<path d="M32 40 C42 40 48 46 46 54 C42 56 36 57 32 57 C28 57 22 56 18 54 C16 46 22 40 32 40 Z" fill="#E7CFA6"/>' +
+      '<circle cx="23" cy="32" r="8.5" fill="#FFF8EA"/><circle cx="41" cy="32" r="8.5" fill="#FFF8EA"/>' + E(23, 32, 4.6) + E(41, 32, 4.6) +
+      '<path d="M29 39 L35 39 L32 44 Z" fill="#F2B33A"/>' },
+    { id: 'frog', name: 'Frog', bg: '#7CC8FF', svg:
+      '<circle cx="21" cy="22" r="8.5" fill="#5BBF5E"/><circle cx="43" cy="22" r="8.5" fill="#5BBF5E"/><circle cx="21" cy="22" r="5.2" fill="#fff"/><circle cx="43" cy="22" r="5.2" fill="#fff"/>' + E(21, 23, 3.2) + E(43, 23, 3.2) +
+      '<path d="M8 38 C8 28 18 26 32 26 C46 26 56 28 56 38 C56 50 46 55 32 55 C18 55 8 50 8 38 Z" fill="#6AD06D"/>' + blush +
+      '<path d="M20 41 Q32 51 44 41" stroke="#1F5A2A" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
+      '<circle cx="28" cy="33" r="1.2" fill="#1F5A2A"/><circle cx="36" cy="33" r="1.2" fill="#1F5A2A"/>' },
+    { id: 'raccoon', name: 'Raccoon', bg: '#C7A6FF', svg:
+      '<path d="M13 16 L24 23 L15 30 Z" fill="#7C8089"/><path d="M51 16 L40 23 L49 30 Z" fill="#7C8089"/>' +
+      '<path d="M32 20 C46 20 54 30 54 39 C54 49 44 55 32 55 C20 55 10 49 10 39 C10 30 18 20 32 20 Z" fill="#A3A7B0"/>' +
+      '<path d="M10 36 C16 30 26 31 32 35 C38 31 48 30 54 36 C52 42 44 44 38 41 C35 40 33 40 32 40 C31 40 29 40 26 41 C20 44 12 42 10 36 Z" fill="#2F3238"/>' +
+      '<path d="M32 40 C38 40 44 44 44 48 C40 53 36 54 32 54 C28 54 24 53 20 48 C20 44 26 40 32 40 Z" fill="#F2EFEA"/>' +
+      E(23, 37, 3.6) + E(41, 37, 3.6) + '<ellipse cx="32" cy="44.5" rx="3.2" ry="2.4" fill="#2F3238"/>' + smile(49, 2.6) },
+    { id: 'bunny', name: 'Bunny', bg: '#FFC14D', svg:
+      '<ellipse cx="23" cy="15" rx="5.5" ry="13" fill="#F7F1E8"/><ellipse cx="41" cy="15" rx="5.5" ry="13" fill="#F7F1E8"/><ellipse cx="23" cy="15" rx="2.6" ry="9" fill="#FFB6C3"/><ellipse cx="41" cy="15" rx="2.6" ry="9" fill="#FFB6C3"/>' +
+      '<circle cx="32" cy="39" r="18" fill="#FBF7F0"/>' + blush + E(25, 36) + E(39, 36) +
+      '<path d="M29.5 42 L34.5 42 L32 45 Z" fill="#FF8FA3"/><path d="M32 45 L32 47 M32 47 Q28.5 50 27 47.5 M32 47 Q35.5 50 37 47.5" stroke="#13241B" stroke-width="1.8" fill="none" stroke-linecap="round"/>' },
+    { id: 'penguin', name: 'Penguin', bg: '#FF8A70', svg:
+      '<path d="M32 12 C47 12 54 24 54 38 C54 50 45 56 32 56 C19 56 10 50 10 38 C10 24 17 12 32 12 Z" fill="#1E2A33"/>' +
+      '<path d="M32 22 C40 22 46 28 46 37 C46 47 40 53 32 53 C24 53 18 47 18 37 C18 28 24 22 32 22 Z" fill="#FFFFFF"/>' +
+      E(26, 34, 3.8) + E(38, 34, 3.8) + '<path d="M27.5 40 L36.5 40 L32 45.5 Z" fill="#F7A72E"/>' + blush },
+    { id: 'lion', name: 'Lion', bg: '#6FD08C', svg:
+      '<circle cx="32" cy="34" r="24" fill="#C9752C"/>' +
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(function (i) { var a = i * Math.PI / 6; return '<circle cx="' + (32 + 21 * Math.cos(a)).toFixed(1) + '" cy="' + (34 + 21 * Math.sin(a)).toFixed(1) + '" r="6" fill="#B3621F"/>'; }).join('') +
+      '<circle cx="32" cy="35" r="16" fill="#F4C15A"/><ellipse cx="32" cy="42" rx="7.5" ry="5.5" fill="#FFE6A8"/>' +
+      E(26, 32, 3.6) + E(38, 32, 3.6) + '<path d="M29 38.5 L35 38.5 L32 42 Z" fill="#7A3E19"/>' + smile(44.5, 3) },
+    { id: 'panda', name: 'Panda', bg: '#D4F53C', svg:
+      '<circle cx="15" cy="19" r="7" fill="#1E1E22"/><circle cx="49" cy="19" r="7" fill="#1E1E22"/>' +
+      '<circle cx="32" cy="36" r="20" fill="#FFFFFF"/>' +
+      '<ellipse cx="23.5" cy="34" rx="6" ry="7.5" fill="#1E1E22" transform="rotate(20 23.5 34)"/><ellipse cx="40.5" cy="34" rx="6" ry="7.5" fill="#1E1E22" transform="rotate(-20 40.5 34)"/>' +
+      '<circle cx="24" cy="33" r="2.4" fill="#fff"/><circle cx="40" cy="33" r="2.4" fill="#fff"/>' +
+      '<ellipse cx="32" cy="42" rx="3.4" ry="2.5" fill="#1E1E22"/>' + smile(46, 3) + blush },
+    { id: 'hedgehog', name: 'Hedgehog', bg: '#7CC8FF', svg:
+      '<path d="M8 40 L12 26 L18 32 L20 16 L27 26 L32 12 L37 26 L44 16 L46 32 L52 26 L56 40 C56 50 46 56 32 56 C18 56 8 50 8 40 Z" fill="#6E4A33"/>' +
+      '<path d="M32 28 C42 28 48 35 48 43 C48 51 41 55 32 55 C23 55 16 51 16 43 C16 35 22 28 32 28 Z" fill="#E9C9A2"/>' +
+      E(26, 39, 3.4) + E(38, 39, 3.4) + '<circle cx="32" cy="45" r="2.6" fill="#2A1A12"/>' + smile(49, 2.6) },
+    { id: 'moose', name: 'Moose', bg: '#F6EEDC', svg: '<g transform="translate(5 7) scale(.84)">' +
+      '<path d="M20 22 C12 22 6 16 6 8 C9 12 11 10 12 6 C14 10 16 9 17 5 C19 11 22 15 24 20 Z" fill="#D9B48A"/><path d="M44 22 C52 22 58 16 58 8 C55 12 53 10 52 6 C50 10 48 9 47 5 C45 11 42 15 40 20 Z" fill="#D9B48A"/>' +
+      '<ellipse cx="19" cy="27" rx="6" ry="3.5" fill="#6B4630" transform="rotate(-25 19 27)"/><ellipse cx="45" cy="27" rx="6" ry="3.5" fill="#6B4630" transform="rotate(25 45 27)"/>' +
+      '<path d="M32 20 C42 20 46 28 46 36 C46 40 48 44 48 48 C48 54 41 57 32 57 C23 57 16 54 16 48 C16 44 18 40 18 36 C18 28 22 20 32 20 Z" fill="#7E5639"/>' +
+      '<ellipse cx="32" cy="48" rx="12" ry="8" fill="#A97C58"/>' + E(25, 33, 3.4) + E(39, 33, 3.4) +
+      '<ellipse cx="27.5" cy="47" rx="1.8" ry="2.4" fill="#3B2416"/><ellipse cx="36.5" cy="47" rx="1.8" ry="2.4" fill="#3B2416"/>' + smile(51.5, 3) + '</g>' },
+    { id: 'cat', name: 'Cat', bg: '#C7A6FF', svg:
+      '<path d="M12 12 L26 22 L13 30 Z" fill="#4A4F5A"/><path d="M52 12 L38 22 L51 30 Z" fill="#4A4F5A"/><path d="M15 17 L22 22 L16 26 Z" fill="#FFB6C3"/><path d="M49 17 L42 22 L48 26 Z" fill="#FFB6C3"/>' +
+      '<circle cx="32" cy="37" r="19" fill="#5B616D"/>' + blush + E(25, 35, 3.8) + E(39, 35, 3.8) +
+      '<path d="M30 41 L34 41 L32 43.5 Z" fill="#FF8FA3"/><path d="M32 43.5 Q29 47 26.5 45 M32 43.5 Q35 47 37.5 45" stroke="#F2EFEA" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+      '<path d="M10 39 L20 40 M10 44 L20 42.5 M54 39 L44 40 M54 44 L44 42.5" stroke="#F2EFEA" stroke-width="1.2" stroke-linecap="round" opacity=".8"/>' }
+  ];
+})();
+var AV = {}; AVATARS.forEach(function (a) { AV[a.id] = a; });
+function avatarSvg(id, size) {
+  var a = AV[id]; if (!a) return '';
+  return '<svg viewBox="0 0 64 64" width="' + (size || 40) + '" height="' + (size || 40) + '" aria-hidden="true" style="display:block;border-radius:50%"><circle cx="32" cy="32" r="32" fill="' + a.bg + '"/>' + a.svg + '</svg>';
+}
+
+var LS = { session: 'camp.session', data: 'camp.data', outbox: 'camp.outbox', api: 'camp.api', tab: 'camp.tab', leaders: 'camp.leaders' };
+
+/* ------------------------------------------------------------------ */
+/* State                                                               */
+/* ------------------------------------------------------------------ */
+
+var S = {
+  api: (window.CAMP_CONFIG && window.CAMP_CONFIG.apiUrl && window.CAMP_CONFIG.apiUrl.indexOf('http') === 0)
+        ? window.CAMP_CONFIG.apiUrl : (localStorage.getItem(LS.api) || ''),
+  session: load(LS.session, null),
+  data: load(LS.data, null),          // {people, leaders, notes, settings, serverTime}
+  outbox: load(LS.outbox, []),
+  tab: localStorage.getItem(LS.tab) || 'home',
+  group: localStorage.getItem('camp.group') || 'B10',   // last RDG or Leaders opened on the Groups screen
+  filter: '',                           // status filter on list tabs
+  search: '',
+  online: navigator.onLine,
+  loading: false,
+  sheet: null,                          // {type, ...}
+  leaderList: load(LS.leaders, null),   // names only, for the sign in screen (cached so it shows at once)
+  updateReady: false,                   // a newer version of the app has been downloaded
+  activity: null,                       // admin activity rows
+  actRange: 'week',
+  signin: { leaderId: null, pin: '', error: '' }
+};
+
+function load(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+var $ = function (sel, root) { return (root || document).querySelector(sel); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+/* a leader's face: their chosen icon, or their initials */
+function leaderById(id) { return (leaders().filter(function (l) { return l.id === id; })[0]) || ((S.leaderList || []).filter(function (l) { return l.id === id; })[0]); }
+function face(l, size) { return l && l.avatar && AV[l.avatar] ? avatarSvg(l.avatar, size) : esc(initials(l && l.name)); }
+function initials(n) { return String(n || '?').split(/\s+/).map(function (w) { return w[0] || ''; }).slice(0, 2).join('').toUpperCase(); }
+function tel(p) { return String(p || '').replace(/\D/g, ''); }
+function waLink(p) { var d = tel(p); if (!d) return ''; if (d.length === 10 && d[0] === '0') d = '27' + d.slice(1); return 'https://wa.me/' + d; }
+function fmtR(n) { n = Math.round(Number(n) || 0); return 'R' + n.toLocaleString('en-ZA').replace(/,/g, ' '); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function isoDate(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function fmtDate(iso) { if (!iso) return ''; var d = new Date(iso.length === 10 ? iso + 'T12:00:00' : iso); if (isNaN(d)) return iso; return d.getDate() + ' ' + MONTHS[d.getMonth()]; }
+function fmtWhen(iso) { if (!iso) return ''; var d = new Date(iso); if (isNaN(d)) return ''; var now = new Date(); var same = isoDate(d) === isoDate(now); var y = new Date(now); y.setDate(y.getDate() - 1); var yest = isoDate(d) === isoDate(y); var t = pad(d.getHours()) + ':' + pad(d.getMinutes()); if (same) return 'today ' + t; if (yest) return 'yesterday ' + t; return DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ', ' + t; }
+function fmtMins(sec) { var m = Math.round(sec / 60); if (sec > 0 && m === 0) return 'under a minute'; if (m < 60) return m + ' min'; var h = Math.floor(m / 60); return h + ' h ' + (m % 60) + ' min'; }
+function daysUntil(iso) { if (!iso) return null; var d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return null; var t = new Date(); t.setHours(0, 0, 0, 0); return Math.round((d - t) / 86400000); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function sortByName(a, b) { return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }); }
+function count(list, code) { return list.filter(function (p) { return (p.status || 'none') === code; }).length; }
+function sum(list, f) { return list.reduce(function (a, p) { return a + (Number(f(p)) || 0); }, 0); }
+function isAdmin() { return !!(S.session && S.session.role === 'admin'); }
+function me() { return S.session; }
+function settings() { return (S.data && S.data.settings) || {}; }
+function people() { return (S.data && S.data.people) || []; }
+function leaders() { return (S.data && S.data.leaders) || []; }
+function notesFor(id) { return ((S.data && S.data.notes) || []).filter(function (n) { return n.personId === id; }).sort(function (a, b) { return a.createdAt < b.createdAt ? 1 : -1; }); }
+function sponsorAmt(p) { return p.status === 'sponsor' ? (Number(p.sponsorAmount) || 0) : 0; }
+
+var toastT;
+function toast(msg, err) {
+  var el = $('#toast'); el.textContent = msg; el.className = 'status-line show' + (err ? ' err' : '');
+  clearTimeout(toastT); toastT = setTimeout(function () { el.className = 'status-line'; }, err ? 3600 : 1800);
+}
+
+/* ------------------------------------------------------------------ */
+/* API                                                                 */
+/* ------------------------------------------------------------------ */
+
+function apiPost(payload, opts) {
+  opts = opts || {};
+  var body = Object.assign({}, payload);
+  if (S.session && !body.leaderId) { body.leaderId = S.session.leaderId; body.token = S.session.token; }
+  var ctl = ('AbortController' in window) ? new AbortController() : null;
+  var timer = ctl ? setTimeout(function () { ctl.abort(); }, opts.timeout || 25000) : null;
+  return fetch(S.api, {
+    method: 'POST', redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined, keepalive: !!opts.keepalive
+  }).then(function (r) { return r.json(); }).then(function (d) {
+    if (timer) clearTimeout(timer);
+    if (!d || !d.ok) throw new Error((d && d.error) || 'Request failed');
+    return d;
+  }, function (e) { if (timer) clearTimeout(timer); throw e; });
+}
+
+function refresh(silent) {
+  if (!S.api) return Promise.resolve();
+  if (!S.session) return loadLeaderList();
+  if (S.outbox.length && S.online) { flushOutbox(); return Promise.resolve(); }
+  if (!silent) { S.loading = true; render(); }
+  return apiPost({ action: 'bootstrap' })
+    .then(function (d) {
+      applyData(d);
+      S.loading = false; render();
+    }).catch(function (e) {
+      S.loading = false;
+      if (/sign in again/i.test(e.message)) { signout(true); toast('Your PIN was reset. Please sign in again.', true); return; }
+      render();
+      if (!silent) toast(S.data ? 'Showing saved data, could not reach the server' : 'Could not reach the server', true);
+    });
+}
+
+function loadLeaderList() {
+  var quiet = !!S.leaderList;             // show the cached list straight away, refresh it quietly
+  if (!quiet) { S.loading = true; render(); }
+  return fetch(S.api + (S.api.indexOf('?') > 0 ? '&' : '?') + 'action=leaders', { redirect: 'follow' })
+    .then(function (r) { return r.json(); })
+    .then(function (d) { if (!d.ok) throw new Error(d.error || 'Could not load'); S.leaderList = d.leaders; save(LS.leaders, d.leaders); S.loading = false; if (!S.session) render(); })
+    .catch(function () { S.loading = false; if (!quiet) { render(); toast('Could not reach the server. Check your signal and try again.', true); } });
+}
+
+function applyData(d) {
+  S.data = { people: d.people || [], leaders: d.leaders || [], notes: d.notes || [], settings: d.settings || {}, serverTime: d.serverTime, loadedAt: new Date().toISOString() };
+  save(LS.data, S.data);
+  if (S.session) { var l = S.data.leaders.filter(function (x) { return x.id === S.session.leaderId; })[0]; if (l) { S.session.role = l.role; S.session.name = l.name; save(LS.session, S.session); } }
+}
+
+/* Writes are optimistic. Failed writes wait in an outbox and are retried. */
+function send(payload, onOk) {
+  if (!S.online) { queue(payload); return Promise.resolve(); }
+  return apiPost(payload).then(function (d) { if (onOk) onOk(d); flushOutbox(); }).catch(function (e) {
+    if (/sign in again|Admins only|Wrong PIN|not found|Unknown action|is empty|is needed|must be/i.test(e.message)) { toast(e.message, true); return; }
+    queue(payload); toast('Saved on this phone, will sync when online', true);
+  });
+}
+function queue(p) { S.outbox.push({ id: uid(), payload: p, at: new Date().toISOString() }); save(LS.outbox, S.outbox); }
+var flushing = false;
+function flushOutbox() {
+  if (flushing || !S.outbox.length || !S.online || !S.session) return;
+  flushing = true;
+  var item = S.outbox[0];
+  apiPost(item.payload).then(function () {
+    S.outbox.shift(); save(LS.outbox, S.outbox); flushing = false;
+    if (S.outbox.length) flushOutbox(); else { toast('Synced'); refresh(true); }
+  }).catch(function (e) {
+    flushing = false;
+    if (/sign in again|Admins only|not found|Unknown action/i.test(e.message)) { S.outbox.shift(); save(LS.outbox, S.outbox); flushOutbox(); }
+  });
+}
+window.addEventListener('online', function () { S.online = true; render(); if (S.outbox.length) flushOutbox(); else refresh(true); });
+window.addEventListener('offline', function () { S.online = false; render(); });
+
+/* ------------------------------------------------------------------ */
+/* Activity tracking: which tab, by whom, for how long                 */
+/* ------------------------------------------------------------------ */
+
+var ACT = { sessionId: uid(), entries: [], cur: null, timer: null, logged: false };
+function device() { var u = navigator.userAgent; var os = /iPhone|iPad/.test(u) ? 'iPhone' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'Other'; var st = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches ? ' app' : ' browser'; return os + st; }
+function actOpen() { if (!S.session || ACT.logged) return; ACT.logged = true; ACT.entries.push({ event: 'open', tab: '', startedAt: new Date().toISOString(), seconds: 0 }); actStart(S.tab); setTimeout(function () { actFlush(false); }, 5000); }
+function actStart(tab) { if (!S.session) return; ACT.cur = { tab: tab, start: Date.now() }; }
+function actStop() {
+  if (!ACT.cur) return;
+  var sec = Math.round((Date.now() - ACT.cur.start) / 1000);
+  if (sec >= 2) ACT.entries.push({ event: 'tab', tab: ACT.cur.tab, startedAt: new Date(ACT.cur.start).toISOString(), seconds: Math.min(sec, 3600) });
+  ACT.cur = null;
+}
+function actFlush(beacon) {
+  if (!S.session || !ACT.entries.length || !S.api) return;
+  var payload = { action: 'logActivity', sessionId: ACT.sessionId, entries: ACT.entries.splice(0), device: device(), leaderId: S.session.leaderId, token: S.session.token };
+  if (beacon && navigator.sendBeacon) {
+    var ok = navigator.sendBeacon(S.api, new Blob([JSON.stringify(payload)], { type: 'text/plain;charset=utf-8' }));
+    if (!ok) ACT.entries = payload.entries.concat(ACT.entries);
+    return;
+  }
+  apiPost(payload, { keepalive: true }).catch(function () { ACT.entries = payload.entries.concat(ACT.entries); });
+}
+var hiddenAt = 0;
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); actStop(); actFlush(true); }
+  else if (S.session) { actStart(S.tab); if (hiddenAt && Date.now() - hiddenAt > 120000 && S.online) refresh(true); }
+});
+window.addEventListener('pagehide', function () { actStop(); actFlush(true); });
+setInterval(function () { if (document.visibilityState === 'visible' && ACT.cur) { actStop(); actStart(S.tab); } actFlush(false); }, 60000);
+
+/* Consecutive log rows from one session on one tab are shown as one visit. */
+function visits(rows) {
+  var by = {};
+  rows.filter(function (r) { return r.event === 'tab' && r.startedAt; }).sort(function (a, b) { return a.startedAt < b.startedAt ? -1 : 1; }).forEach(function (r) {
+    var key = r.sessionId + '|' + r.tab; var list = by[key] || (by[key] = []); var last = list[list.length - 1];
+    var start = new Date(r.startedAt).getTime(); var end = start + (Number(r.seconds) || 0) * 1000;
+    if (last && start - last.end <= 150000) { last.end = Math.max(last.end, end); last.seconds = Math.round((last.end - last.start) / 1000); }
+    else list.push({ leaderId: r.leaderId, leaderName: r.leaderName, tab: r.tab, start: start, end: end, seconds: Number(r.seconds) || 0, device: r.device, startedAt: r.startedAt });
+  });
+  var out = []; Object.keys(by).forEach(function (k) { out = out.concat(by[k]); });
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
+/* Rendering                                                           */
+/* ------------------------------------------------------------------ */
+
+var app = $('#app');
+
+function render() {
+  if (!S.api) { app.innerHTML = viewSetup(); return; }
+  if (!S.session) { app.innerHTML = viewSignin(); return; }
+  if (!S.data) { app.innerHTML = viewHeader('home') + '<main><div class="empty">' + (S.loading ? 'Loading the Green tribe…' : 'Nothing loaded yet. Tap your initials, then Reload data.') + '</div></main>' + viewNav(); return; }
+  var body, screen;
+  if (RDG[S.tab] || S.tab === 'leaders') { screen = 'groups'; S.group = S.tab; body = viewGroups(); }
+  else if (S.tab === 'reports') { screen = 'reports'; body = viewReports(); }
+  else if (S.tab === 'activity' && isAdmin()) { screen = 'activity'; body = viewActivity(); }
+  else { S.tab = 'home'; screen = 'home'; body = viewHome(); }
+  app.innerHTML = viewHeader(screen) + '<main>' + (S.updateReady ? '<button class="banner update" data-act="reloadPage"><span>A new version of the app is ready.</span><span>Tap to update</span></button>' : '') + (S.online ? '' : '<div class="banner">You are offline. Showing the last data loaded on this phone; changes will sync when you are back online.</div>') + body + '</main>' + viewNav(screen) + (S.sheet ? viewSheet() : '');
+}
+
+function viewSetup() {
+  return '<div class="signin"><img class="patch" src="patch.png" alt=""><div class="mark">Summer Camp <span class="serif">rally tracker</span></div><p class="lead">This phone does not know where the shared data lives yet. Paste the web app URL that Apps Script gave you (it starts with https://script.google.com/macros/).</p>' +
+    '<div class="field"><label for="apiurl">Web app URL</label><input id="apiurl" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec"></div>' +
+    '<div class="actions"><button class="btn" data-act="saveApi">Connect</button></div></div>';
+}
+
+function viewSignin() {
+  var ls = S.leaderList || [];
+  var picked = S.signin.leaderId ? ls.filter(function (l) { return l.id === S.signin.leaderId; })[0] : null;
+  var h = '<div class="signin"><img class="patch" src="patch.png" alt="Summer Camp, Green tribe 2027"><div class="mark">Summer Camp <span class="serif">rally tracker</span></div>';
+  if (!S.leaderList) {
+    h += '<p class="lead">' + (S.loading ? 'Loading the list of leaders…' : 'Could not load the list of leaders.') + '</p>' + (S.loading ? '' : '<button class="btn" data-act="reload">Try again</button>');
+    return h + '</div>';
+  }
+  if (!picked) {
+    h += '<p class="lead">Pick your name to sign in. Your PIN is set the first time you sign in.</p>';
+    groupOrder(ls).forEach(function (g) {
+      h += '<div class="grp"><h3>' + esc(g) + '</h3><div class="names">' + ls.filter(function (l) { return l.group === g; }).sort(sortByName).map(function (l) {
+        return '<button data-act="pick" data-id="' + esc(l.id) + '" class="' + (l.role === 'admin' ? 'admin' : '') + '"><span class="ini' + (l.avatar ? ' has' : '') + '">' + face(l, 30) + '</span><span>' + esc(l.name) + '</span></button>';
+      }).join('') + '</div></div>';
+    });
+    h += '<p class="muted" style="margin-top:22px;font-size:13px;text-align:center">Not on the list? Ask ' + esc(adminNames()) + ' to add you.</p>';
+  } else {
+    h += '<p class="lead">' + (picked.hasPin ? 'Welcome back, ' + esc(picked.name.split(' ')[0]) + '. Enter your PIN.' : 'Hi ' + esc(picked.name.split(' ')[0]) + '. Choose a 4 digit PIN you will remember. You will use it on this and any other phone.') + '</p>' +
+      '<div class="pin"><input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" aria-label="PIN" value="' + esc(S.signin.pin) + '"></div>' +
+      (picked.hasPin ? '' : '<div class="field"><label for="joincode">Team code (ask ' + esc(adminNames()) + ' for it)</label><input id="joincode" autocapitalize="characters" autocomplete="off" value="' + esc(S.signin.joinCode || '') + '"></div>') +
+      (S.signin.error ? '<div class="err">' + esc(S.signin.error) + '</div>' : '') +
+      '<div class="actions"><button class="btn secondary" data-act="unpick">Not me</button><button class="btn" data-act="login">' + (picked.hasPin ? 'Sign in' : 'Create PIN') + '</button></div>' +
+      (picked.hasPin ? '<p class="muted" style="margin-top:16px;font-size:13px">Forgotten your PIN? Ask ' + esc(adminNames()) + ' to reset it.</p>' : '');
+  }
+  return h + '</div>';
+}
+function groupOrder(list) { var pref = ['Tribe lead', 'Wildlife', 'Fuel']; var g = []; list.forEach(function (l) { if (g.indexOf(l.group) < 0) g.push(l.group); }); return g.sort(function (a, b) { var ia = pref.indexOf(a), ib = pref.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b); }); }
+function adminNames() { var a = (S.leaderList || leaders()).filter(function (l) { return l.role === 'admin'; }).map(function (l) { return l.name.split(' ')[0]; }); return a.length ? a.join(' or ') : 'the tribe leader'; }
+
+/* Line icons in the two-tone style of the tribe board: white strokes with a lime accent */
+var ICON = {
+  home: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></svg>',
+  groups: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.2 14.6c2.4.1 4 1.7 4.4 4.4"/></svg>',
+  reports: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 16v-3.5M12 16V8.5M15 16v-5"/></svg>',
+  activity: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+  search: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>',
+  plus: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  share: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>',
+  arrow: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h11M12 7l5 5-5 5"/></svg>'
+};
+
+function viewHeader(screen) {
+  var m = me() || {}; var now = new Date();
+  var titles = { groups: 'Groups', reports: 'Reports', activity: 'Activity' };
+  var mid = screen === 'home' || !titles[screen]
+    ? '<div class="hello">Hello, ' + esc(String(m.name || '').split(' ')[0]) + '</div><div class="today">Today ' + now.getDate() + ' ' + MONTHS[now.getMonth()] + '</div>'
+    : '<h1>' + titles[screen] + '</h1>';
+  var mine = leaderById(m.leaderId) || m;
+  return '<header class="hdr"><button class="avatar' + (mine.avatar ? ' has' : '') + '" data-act="menu" aria-label="Account and settings">' + face(mine, 48) + '</button>' +
+    '<div class="who">' + mid + '</div>' +
+    '<button class="circle-btn" data-act="searchGo" aria-label="Search young people">' + ICON.search + '</button></header>';
+}
+
+function viewNav(screen) {
+  var items = [['home', 'Home', 'home'], ['groups', 'Groups', S.group || 'B10'], ['reports', 'Reports', 'reports']];
+  if (isAdmin()) items.push(['activity', 'Activity', 'activity']);
+  var attention = attentionList().length;
+  return '<nav class="nav" aria-label="Main">' + items.map(function (it) {
+    return '<button data-act="tab" data-tab="' + it[2] + '" aria-current="' + (screen === it[0] ? 'page' : 'false') + '">' + ICON[it[0]] + '<span class="lbl">' + it[1] + '</span>' +
+      (it[0] === 'reports' && attention && screen !== 'reports' ? '<span class="dot"></span>' : '') + '</button>';
+  }).join('') + '</nav>';
+}
+
+/* young people who need a leader this week: overdue or due confirmations, sponsorship without an amount */
+function attentionList() {
+  var today = isoDate(new Date()); var wk = new Date(); wk.setDate(wk.getDate() + 7); var soon = isoDate(wk);
+  return people().filter(function (p) {
+    return (p.status === 'confirming' && p.confirmBy && p.confirmBy <= soon) || (p.status === 'sponsor' && !Number(p.sponsorAmount));
+  }).sort(function (a, b) { return (a.confirmBy || '9') < (b.confirmBy || '9') ? -1 : 1; });
+  void today;
+}
+
+function rdgPills(current, withLeaders) {
+  var list = RDGS.slice();
+  return '<div class="pills' + (withLeaders ? '' : ' six') + '">' + list.map(function (r) {
+    var ppl = people().filter(function (p) { return p.rdg === r.code; });
+    var b = count(ppl, 'bought');
+    var warn = ppl.some(function (p) { return p.status === 'sponsor' || (p.status === 'confirming' && p.confirmBy && p.confirmBy < isoDate(new Date())); });
+    var dot = warn ? 'warn' : (ppl.length && b / ppl.length >= 0.5 ? 'on' : '');
+    return '<button class="dpill" data-act="tab" data-tab="' + r.code + '" aria-current="' + (current === r.code) + '" aria-label="' + esc(r.long) + ', ' + b + ' of ' + ppl.length + ' bought">' +
+      '<span class="dt ' + dot + '"></span><span class="k">' + (r.code[0] === 'B' ? 'Boys' : 'Girls') + '</span><span class="n">' + r.code.slice(1) + '</span><span class="f">' + b + '/' + ppl.length + '</span></button>';
+  }).join('') + (withLeaders ? '<button class="dpill lead" data-act="tab" data-tab="leaders" aria-current="' + (current === 'leaders') + '"><span class="dt"></span><span class="k">Team</span><span class="n">Lead</span><span class="f">' + count(leaders(), 'bought') + '/' + leaders().length + '</span></button>' : '') + '</div>';
+}
+
+function viewHome() {
+  var st = settings(); var all = people(); var ls = leaders();
+  var c = {}; STATUS.forEach(function (x) { c[x.code] = count(all, x.code); });
+  var days = daysUntil(st.campStart);
+  var countTxt = days === null ? 'Set the camp date' : days > 1 ? days + ' days to go' : days === 1 ? 'Tomorrow' : days === 0 ? 'Today!' : 'Camp has started';
+  var team = ls.slice().sort(sortByName);
+  var withIcons = team.filter(function (l) { return l.avatar; }).concat(team.filter(function (l) { return !l.avatar; }));
+  var stack = withIcons.slice(0, 3).map(function (l) { return '<span class="' + (l.avatar ? 'has' : '') + '">' + face(l, 32) + '</span>'; }).join('') + (team.length > 3 ? '<span class="more">+' + (team.length - 3) + '</span>' : '');
+  var pct = all.length ? Math.round(100 * c.bought / all.length) : 0;
+  var spTotal = sum(all, sponsorAmt);
+  var att = attentionList(); var overdue = att.filter(function (p) { return p.confirmBy && p.confirmBy < isoDate(new Date()); }).length;
+
+  var h = '<section class="hero"><h2>' + esc(st.campName || 'Summer Camp') + '<span class="serif">let\'s rally the tribe</span></h2>' +
+    '<div class="when">' + esc(st.campDates || 'Dates to be confirmed') + '</div>' +
+    '<div class="foot"><div class="stack" aria-label="' + team.length + ' leaders">' + stack + '</div><span class="count-pill">' + esc(countTxt) + '</span></div>' +
+    '<img class="patch" src="patch.png" alt=""></section>';
+  h += rdgPills(null, false);
+  h += '<div class="sec"><h3>Where we <span class="serif">stand</span></h3><button class="link" data-act="tab" data-tab="reports">Reports</button></div>';
+  h += '<div class="cards">' +
+    '<button class="card mint" data-act="tab" data-tab="reports"><span class="tag">Going</span><div class="big">' + c.bought + '<small>of ' + all.length + '</small></div><div class="cap">have bought a ticket</div>' +
+      '<div class="ring"><div class="prog"><i style="width:' + pct + '%"></i></div><div class="cap" style="margin-top:8px">' + pct + '% of the tribe · ' + (c.looking + c.confirming) + ' more on the way</div></div></button>' +
+    '<button class="card cream" data-act="tab" data-tab="reports"><span class="tag">Sponsorship</span><div class="big">' + (spTotal ? fmtR(spTotal) : c.sponsor) + '</div><div class="cap">' + (spTotal ? c.sponsor + ' young ' + (c.sponsor === 1 ? 'person needs' : 'people need') + ' help' : (c.sponsor === 1 ? 'needs help' : 'need help')) + '</div></button>' +
+    '<div class="card dark"><div class="cap muted" style="margin:0 0 10px">Quick actions</div><div class="quickrow">' +
+      '<button data-act="add" aria-label="Add a young person">' + ICON.plus + '<span>Add</span></button>' +
+      '<button data-act="copySummary" aria-label="Copy a WhatsApp summary">' + ICON.share + '<span>Share</span></button>' +
+      '<button data-act="searchGo" aria-label="Search">' + ICON.search + '<span>Search</span></button></div></div>' +
+    '</div>';
+  var asked = all.length - c.none;
+  var stepsOn = all.length ? Math.round(7 * asked / all.length) : 0;
+  h += '<button class="chase" data-act="tab" data-tab="reports"><div class="txt"><b>' + (att.length ? 'Chase ' + att.length + ' this week' : 'Keep it up!') + '</b><div class="s">' +
+    (att.length ? (overdue ? overdue + ' confirmation' + (overdue === 1 ? ' is' : 's are') + ' overdue. ' : '') + 'Due confirmations and sponsorships with no amount yet.' : asked + ' of ' + all.length + ' young people asked so far.') + '</div>' +
+    '<div class="steps" aria-hidden="true">' + [0, 1, 2, 3, 4, 5, 6].map(function (i) { return '<i class="' + (i < stepsOn ? 'on' : '') + '"></i>'; }).join('') + '</div></div>' +
+    '<div class="badge' + (overdue ? ' warn' : '') + '">' + (att.length || c.none) + '</div></button>';
+  if (att.length) {
+    h += '<div class="sec"><h3>Needs <span class="serif">attention</span></h3>' + (att.length > 4 ? '<button class="link" data-act="tab" data-tab="reports">See all ' + att.length + '</button>' : '') + '</div><div class="panel">' + att.slice(0, 4).map(function (p) { return rowHtml(p, 'people'); }).join('') + '</div>';
+  }
+  return h;
+}
+
+function viewGroups() {
+  var key = S.tab;
+  var h = rdgPills(key, true);
+  if (key === 'leaders') return h + viewList(leaders(), 'Leaders', 'leaders');
+  if (S.search.trim()) return h + viewList(people(), 'Searching every RDG (clear the search to see ' + RDG[key].label + ')', 'people');
+  return h + viewList(people().filter(function (p) { return p.rdg === key; }), RDG[key].long, 'people');
+}
+
+function viewList(list, title, kind) {
+  var total = list.length;
+  var counts = {}; STATUS.forEach(function (s) { counts[s.code] = count(list, s.code); });
+  var going = counts.bought;
+  var bar = STATUS.filter(function (s) { return s.code !== 'none' && counts[s.code]; }).map(function (s) {
+    return '<span style="width:' + (100 * counts[s.code] / Math.max(total, 1)) + '%;background:' + s.c + '" title="' + s.label + ' ' + counts[s.code] + '"></span>';
+  }).join('');
+  var legend = STATUS.map(function (s) {
+    return '<button class="chip' + (s.code === 'none' ? ' ghost' : '') + '" style="--c:' + s.c + '" data-act="filter" data-code="' + s.code + '" aria-pressed="' + (S.filter === s.code) + '"><i></i><b>' + counts[s.code] + '</b> ' + esc(s.short) + '</button>';
+  }).join('');
+  var sponsorTotal = sum(list, sponsorAmt);
+  var sub = total ? going + ' of ' + total + ' have a ticket' + (counts.sponsor ? ', ' + counts.sponsor + ' need sponsorship' + (sponsorTotal ? ' (' + fmtR(sponsorTotal) + ')' : '') : '') : 'No one here yet';
+  var q = S.search.trim().toLowerCase();
+  var shown = list.filter(function (p) { return (!S.filter || (p.status || 'none') === S.filter) && (!q || p.name.toLowerCase().indexOf(q) >= 0 || tel(p.contact).indexOf(q.replace(/\s/g, '')) >= 0); }).sort(sortByName);
+  var tparts = String(title).split(' (');
+  var h = '<div class="pulse" style="margin-top:12px"><div class="head"><h2>' + esc(tparts[0]) + (tparts[1] ? '<span class="serif">' + esc(tparts[1].replace(/\)$/, '')) + '</span>' : '') + '</h2><div class="big">' + going + '/' + total + '<small>going</small></div></div>' +
+    '<div class="bar" role="img" aria-label="' + esc(sub) + '">' + bar + '</div><div class="legend">' + legend + '</div></div>';
+  h += '<div class="search"><input type="search" placeholder="Search names or numbers" value="' + esc(S.search) + '" data-act="search" aria-label="Search">' + (kind === 'people' ? '<button class="btn round" data-act="add" title="Add a young person" aria-label="Add a young person">' + ICON.plus + '</button>' : '') + '</div>';
+  if (kind === 'leaders') {
+    var groups = groupOrder(shown);
+    h += groups.map(function (g) { return '<div class="panel"><div class="ph"><h3>' + esc(g) + '</h3><span class="muted">' + shown.filter(function (l) { return l.group === g; }).length + '</span></div>' + shown.filter(function (l) { return l.group === g; }).map(function (l) { return rowHtml(l, 'leaders'); }).join('') + '</div>'; }).join('');
+    if (!shown.length) h += '<div class="panel"><div class="empty">No leaders match.</div></div>';
+  } else {
+    h += '<div class="panel">' + (shown.length ? shown.map(function (p) { return rowHtml(p, 'people'); }).join('') : '<div class="empty">' + (S.filter ? 'No one is marked ' + esc(ST[S.filter].label.toLowerCase()) + ' here.' : 'No one here yet. Tap + to add a young person.') + '</div>') + '</div>';
+  }
+  return h;
+}
+
+function rowHtml(p, kind) {
+  var s = ST[p.status] || ST.none;
+  var bits = [];
+  if (kind === 'people') {
+    if (S.search.trim() && RDG[p.rdg]) bits.push(RDG[p.rdg].label);
+    if (p.status === 'confirming' && p.confirmBy) bits.push('Confirm by ' + fmtDate(p.confirmBy));
+    bits.push(p.lastSeen ? 'At youth ' + fmtDate(p.lastSeen) : 'Not at youth recently');
+    if (p.contact && bits.length < 3) bits.push(esc(p.contact));
+  } else {
+    if (p.contact) bits.push(esc(p.contact));
+    if (p.rdg && RDG[p.rdg]) bits.push(RDG[p.rdg].label);
+  }
+  var meta = ['<span>' + bits.join(' · ') + '</span>'];
+  if (p.latestNote) meta.push('<span class="nt">' + esc(p.latestNote.length > 70 ? p.latestNote.slice(0, 68) + '…' : p.latestNote) + '</span>');
+  return '<button class="person" data-act="open" data-kind="' + kind + '" data-id="' + esc(p.id) + '"><span class="ini' + (kind === 'leaders' && p.avatar ? ' has' : '') + '">' + (kind === 'leaders' ? face(p, 40) : esc(initials(p.name))) + '</span><div class="who"><div class="name">' + esc(p.name) + (p.isNew ? '<span class="new">new</span>' : '') + '</div><div class="meta">' + meta.map(function (m) { return '<span>' + m + '</span>'; }).join('') + '</div></div>' +
+    '<span class="pill" style="--c:' + s.c + ';--bgc:' + s.bg + '"><i></i>' + esc(s.short) + (p.status === 'sponsor' && Number(p.sponsorAmount) ? ' <span class="amt">' + fmtR(p.sponsorAmount) + '</span>' : '') + '</span></button>';
+}
+
+/* ---- Reports: only what helps decide who is going and who needs help ---- */
+function viewReports() {
+  var all = people(); var ls = leaders(); var st = settings();
+  var c = {}; STATUS.forEach(function (s) { c[s.code] = count(all, s.code); });
+  var sponsorTotal = sum(all, sponsorAmt);
+  var possible = c.bought + c.looking + c.confirming + c.sponsor;
+  var h = '<div class="pulse"><div class="head"><h2>' + esc(st.tribe || 'Green tribe') + '</h2><div class="big">' + c.bought + '<small>of ' + all.length + ' have tickets</small></div></div>' +
+    '<div class="bar">' + STATUS.filter(function (s) { return s.code !== 'none' && c[s.code]; }).map(function (s) { return '<span style="width:' + (100 * c[s.code] / Math.max(all.length, 1)) + '%;background:' + s.c + '"></span>'; }).join('') + '</div>' +
+    '<p class="muted" style="margin:0;font-size:13.5px;font-weight:600">Up to <b style="color:var(--ink)">' + possible + '</b> could come if everyone looking, confirming or sponsored gets there. ' + c.none + ' still need to be asked.</p></div>';
+  h += '<div class="tiles" style="margin-top:14px">' + STATUS.map(function (s) {
+    return '<div class="tile" style="--c:' + s.c + '"><div class="v">' + c[s.code] + '</div><div class="l">' + esc(s.label) + '</div>' + (s.code === 'sponsor' && sponsorTotal ? '<div class="x">' + fmtR(sponsorTotal) + ' needed</div>' : '') + '</div>';
+  }).join('') + '</div>';
+  // per RDG
+  h += '<div class="panel" style="margin-top:14px"><div class="ph"><h3>By RDG</h3><span class="muted">tickets of total</span></div>' + RDGS.map(function (r) {
+    var list = all.filter(function (p) { return p.rdg === r.code; }); var n = list.length || 1;
+    return '<div class="rdgrow"><div class="lbl">' + esc(r.label) + '</div><div class="mini">' + STATUS.filter(function (s) { return s.code !== 'none'; }).map(function (s) { var k = count(list, s.code); return k ? '<span style="width:' + (100 * k / n) + '%;background:' + s.c + '"></span>' : ''; }).join('') + '</div><div class="cnt">' + count(list, 'bought') + ' of ' + list.length + '</div></div>';
+  }).join('') + '</div>';
+  // needs help
+  var sp = all.filter(function (p) { return p.status === 'sponsor'; }).sort(sortByName);
+  h += '<div class="panel"><div class="ph"><h3>Needs sponsorship</h3><span class="muted">' + sp.length + (sponsorTotal ? ', ' + fmtR(sponsorTotal) : '') + '</span></div>' + (sp.length ? sp.map(function (p) {
+    return '<button class="line" data-act="open" data-kind="people" data-id="' + esc(p.id) + '" style="width:100%;text-align:left"><span class="l">' + esc(p.name) + '<span class="s">' + esc(RDG[p.rdg] ? RDG[p.rdg].label : '') + (p.latestNote ? ', ' + esc(p.latestNote) : '') + '</span></span><span class="r">' + (Number(p.sponsorAmount) ? fmtR(p.sponsorAmount) : 'amount?') + '</span></button>';
+  }).join('') : '<div class="empty">No one needs sponsorship right now.</div>') + '</div>';
+  var cf = all.filter(function (p) { return p.status === 'confirming'; }).sort(function (a, b) { return (a.confirmBy || '9') < (b.confirmBy || '9') ? -1 : 1; });
+  var today = isoDate(new Date());
+  h += '<div class="panel"><div class="ph"><h3>Confirming, chase by</h3><span class="muted">' + cf.length + '</span></div>' + (cf.length ? cf.map(function (p) {
+    var over = p.confirmBy && p.confirmBy < today;
+    return '<button class="line' + (over ? ' over' : '') + '" data-act="open" data-kind="people" data-id="' + esc(p.id) + '" style="width:100%;text-align:left"><span class="l">' + esc(p.name) + '<span class="s">' + esc(RDG[p.rdg] ? RDG[p.rdg].label : '') + (p.latestNote ? ', ' + esc(p.latestNote) : '') + '</span></span><span class="r">' + (p.confirmBy ? (over ? 'overdue, ' : '') + fmtDate(p.confirmBy) : 'no date') + '</span></button>';
+  }).join('') : '<div class="empty">No one is confirming right now.</div>') + '</div>';
+  var no = all.filter(function (p) { return p.status === 'no'; }).sort(sortByName);
+  h += '<div class="panel"><div class="ph"><h3>Not coming</h3><span class="muted">' + no.length + '</span></div>' + (no.length ? no.map(function (p) {
+    return '<button class="line" data-act="open" data-kind="people" data-id="' + esc(p.id) + '" style="width:100%;text-align:left"><span class="l">' + esc(p.name) + '<span class="s">' + esc(RDG[p.rdg] ? RDG[p.rdg].label : '') + '</span></span><span class="r" style="font-weight:600;color:var(--muted);white-space:normal;text-align:right;max-width:55%">' + esc(p.latestNote || 'no reason noted') + '</span></button>';
+  }).join('') : '<div class="empty">No one has said no.</div>') + '</div>';
+  h += '<div class="panel"><div class="ph"><h3>Leaders</h3><span class="muted">' + count(ls, 'bought') + ' of ' + ls.length + ' have tickets</span></div>' + STATUS.filter(function (s) { return count(ls, s.code); }).map(function (s) {
+    var names = s.code === 'none' ? String(count(ls, 'none')) + ' still to ask' : ls.filter(function (l) { return (l.status || 'none') === s.code; }).sort(sortByName).map(function (l) { return l.name.split(' ')[0]; }).join(', ');
+    return '<div class="line"><span class="l">' + esc(s.label) + '</span><span class="r" style="font-weight:600;color:var(--muted);white-space:normal;text-align:right;max-width:65%">' + esc(names) + '</span></div>';
+  }).join('') + '</div>';
+  h += '<div class="actions"><button class="btn secondary" data-act="copySummary">Copy summary for WhatsApp</button></div>';
+  return h;
+}
+
+function summaryText() {
+  var all = people(); var st = settings(); var lines = [];
+  var c = {}; STATUS.forEach(function (s) { c[s.code] = count(all, s.code); });
+  lines.push((st.campName || 'Summer Camp') + ' update, ' + fmtDate(isoDate(new Date())));
+  lines.push('Tickets bought: ' + c.bought + ' of ' + all.length);
+  lines.push('Looking to buy: ' + c.looking + '   Confirming: ' + c.confirming);
+  lines.push('Need sponsorship: ' + c.sponsor + (sum(all, sponsorAmt) ? ' (' + fmtR(sum(all, sponsorAmt)) + ')' : ''));
+  lines.push('Not coming: ' + c.no + '   Not yet asked: ' + c.none);
+  lines.push('');
+  RDGS.forEach(function (r) { var l = all.filter(function (p) { return p.rdg === r.code; }); lines.push(r.label + ': ' + count(l, 'bought') + ' of ' + l.length + ' bought, ' + count(l, 'none') + ' not asked'); });
+  return lines.join('\n');
+}
+
+/* ---- Activity (admins): who opened which tab, when, for how long ---- */
+function viewActivity() {
+  var h = '<div class="pulse"><div class="head"><h2>Who is using the tracker</h2></div><p class="muted" style="margin:6px 0 10px;font-size:13.5px;font-weight:600">Each leader signs in by name, and the app records the tab they are on and for how long. Only admins see this.</p>' +
+    '<div class="seg">' + [['week', 'This week'], ['last', 'Last week'], ['four', 'Last 4 weeks']].map(function (o) { return '<button data-act="actRange" data-v="' + o[0] + '" aria-pressed="' + (S.actRange === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div>';
+  if (!S.activity) { if (!S.actLoading) loadActivity(); return h + '<div class="panel" style="margin-top:14px"><div class="empty">Loading activity…</div></div>'; }
+  var rows = S.activity.rows;
+  var now = new Date(); var mon = new Date(now); mon.setHours(0, 0, 0, 0); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  var from, to = new Date(now.getTime() + 86400000);
+  if (S.actRange === 'week') from = mon; else if (S.actRange === 'last') { from = new Date(mon); from.setDate(from.getDate() - 7); to = mon; } else { from = new Date(mon); from.setDate(from.getDate() - 21); }
+  var inRange = rows.filter(function (r) { var t = new Date(r.startedAt || r.timestamp); return t >= from && t < to; });
+  var allVisits = visits(rows); var rangeVisits = allVisits.filter(function (v) { return v.start >= from.getTime() && v.start < to.getTime(); });
+  // last opened per tab (all time in the loaded window)
+  var tabLabels = {}; RDGS.forEach(function (r) { tabLabels[r.code] = r.label; }); tabLabels.leaders = 'Leaders'; tabLabels.reports = 'Reports'; tabLabels.activity = 'Activity'; tabLabels.home = 'Home';
+  h += '<div class="panel" style="margin-top:14px"><div class="ph"><h3>RDG tabs, last opened</h3></div>' + RDGS.concat([{ code: 'leaders', label: 'Leaders' }, { code: 'reports', label: 'Reports' }]).map(function (r) {
+    var last = allVisits.filter(function (x) { return x.tab === r.code; }).sort(function (a, b) { return b.start - a.start; })[0];
+    var wk = rangeVisits.filter(function (x) { return x.tab === r.code; });
+    var mins = sum(wk, function (x) { return x.seconds; });
+    return '<div class="line"><span class="l">' + esc(r.label) + '<span class="s">' + (last ? esc(last.leaderName) + ', ' + fmtWhen(last.startedAt) + ', ' + fmtMins(Number(last.seconds)) : 'Not opened yet') + '</span></span><span class="r" style="color:var(--muted);font-weight:700">' + (wk.length ? wk.length + (wk.length === 1 ? ' visit, ' : ' visits, ') + fmtMins(mins) : 'no visits') + '</span></div>';
+  }).join('') + '</div>';
+  // per leader in range
+  var ls = leaders().slice().sort(sortByName);
+  var perLeader = ls.map(function (l) {
+    var mine = inRange.filter(function (x) { return x.leaderId === l.id; });
+    var opens = mine.filter(function (x) { return x.event === 'open'; }).length;
+    var secs = sum(mine.filter(function (x) { return x.event === 'tab'; }), function (x) { return x.seconds; });
+    var last = mine.slice().sort(function (a, b) { return (a.startedAt || a.timestamp) < (b.startedAt || b.timestamp) ? 1 : -1; })[0];
+    var tabs = {}; mine.filter(function (x) { return x.event === 'tab'; }).forEach(function (x) { tabs[x.tab] = (tabs[x.tab] || 0) + Number(x.seconds); });
+    var top = Object.keys(tabs).sort(function (a, b) { return tabs[b] - tabs[a]; }).slice(0, 3).map(function (k) { return tabLabels[k] || k; });
+    return { l: l, opens: opens, secs: secs, last: last, top: top };
+  }).sort(function (a, b) { return b.secs - a.secs || b.opens - a.opens || sortByName(a.l, b.l); });
+  h += '<div class="panel"><div class="ph"><h3>Leaders</h3><span class="muted">' + perLeader.filter(function (x) { return x.opens || x.secs; }).length + ' of ' + ls.length + ' active</span></div>' + perLeader.map(function (x) {
+    return '<div class="line"><span class="l">' + esc(x.l.name) + '<span class="s">' + (x.last ? 'Last on ' + fmtWhen(x.last.startedAt || x.last.timestamp) + (x.top.length ? ', mostly ' + esc(x.top.join(', ')) : '') : (x.l.hasPin ? 'No activity in this period' : 'Has not signed in yet')) + '</span></span><span class="r" style="color:' + (x.secs ? 'var(--ink)' : 'var(--muted)') + '">' + (x.opens ? x.opens + (x.opens === 1 ? ' open' : ' opens') + (x.secs ? ', ' + fmtMins(x.secs) : '') : (x.secs ? fmtMins(x.secs) : '')) + '</span></div>';
+  }).join('') + '</div>';
+  // recent sessions
+  var recent = rangeVisits.sort(function (a, b) { return b.start - a.start; }).slice(0, 40);
+  h += '<div class="panel"><div class="ph"><h3>Recent visits</h3><span class="muted">latest 40</span></div>' + (recent.length ? recent.map(function (x) {
+    return '<div class="line"><span class="l">' + esc(x.leaderName) + '<span class="s">' + esc(tabLabels[x.tab] || x.tab) + ', ' + esc(x.device || '') + '</span></span><span class="r" style="font-weight:600;color:var(--muted)">' + fmtWhen(x.startedAt) + '<span class="s" style="text-align:right">' + fmtMins(Number(x.seconds)) + '</span></span></div>';
+  }).join('') : '<div class="empty">No visits in this period.</div>') + '</div>';
+  h += '<div class="actions"><button class="btn secondary" data-act="actReload">Refresh activity</button></div>';
+  return h;
+}
+function loadActivity() {
+  S.actLoading = true;
+  apiPost({ action: 'activity' }).then(function (d) { S.activity = d; S.actLoading = false; render(); }).catch(function (e) { S.actLoading = false; S.activity = { rows: [] }; toast(e.message, true); render(); });
+}
+
+/* ---- Bottom sheets ---- */
+function viewSheet() {
+  var sh = S.sheet; var inner = '';
+  if (sh.type === 'person') inner = sheetPerson(sh);
+  else if (sh.type === 'menu') inner = sheetMenu();
+  else if (sh.type === 'settings') inner = sheetSettings();
+  else if (sh.type === 'add') inner = sheetAdd();
+  else if (sh.type === 'avatar') inner = sheetAvatar(sh);
+  else if (sh.type === 'summary') inner = '<h2>Summary</h2><p class="sub">Copied to your clipboard if your phone allows it. Otherwise select and copy the text below.</p><section><div class="sumtxt">' + esc(summaryText()) + '</div></section>';
+  return '<div class="scrim" data-act="closeSheet"><div class="sheet" role="dialog" aria-modal="true" data-stop="1">' + '<div class="grab"></div>' + inner + '</div></div>';
+}
+
+function recordFor(kind, id) { var list = kind === 'leaders' ? leaders() : people(); return list.filter(function (p) { return p.id === id; })[0]; }
+
+function sheetPerson(sh) {
+  var p = recordFor(sh.kind, sh.id); if (!p) return '<h2>Not found</h2>';
+  var d = sh.draft;
+  var st = settings(); var price = Number(st.ticketPrice) || 0;
+  var h = '<h2>' + esc(p.name) + (p.isNew ? '<span class="new" style="font-size:11px;background:var(--lime);color:var(--forest);padding:2px 7px;border-radius:6px">new</span>' : '') + '</h2>' +
+    '<div class="sub">' + esc(sh.kind === 'leaders' ? (p.group + ' leader') : (RDG[p.rdg] ? RDG[p.rdg].long : '')) + (sh.kind === 'people' ? (p.lastSeen ? ', last at youth ' + fmtDate(p.lastSeen) + (Number(p.fridays) ? ' (' + p.fridays + ' of the last 4 Fridays)' : '') : ', not at youth recently') : '') + '</div>';
+  var cr = [];
+  if (p.contact) cr.push('<a href="tel:' + tel(p.contact) + '">Call ' + esc(p.contact) + '</a><a class="wa" href="' + waLink(p.contact) + '" target="_blank" rel="noopener">WhatsApp</a>');
+  if (p.guardianContact) cr.push('<a href="tel:' + tel(p.guardianContact) + '">' + esc(p.guardianName || 'Guardian') + (p.guardianRel ? ' (' + esc(p.guardianRel.toLowerCase()) + ')' : '') + ' ' + esc(p.guardianContact) + '</a>');
+  if (!cr.length) cr.push('<span class="muted" style="font-size:13px;font-weight:600">No contact number recorded</span>');
+  h += '<section><div class="contact-row">' + cr.join('') + '</div></section>';
+  h += '<section><h4>Where are they with camp?</h4><div class="options">' + STATUS.map(function (s) {
+    return '<button class="opt" role="radio" aria-checked="' + (d.status === s.code) + '" style="--c:' + s.c + ';--bgc:' + s.bg + '" data-act="setStatus" data-code="' + s.code + '"><i></i>' + esc(s.label) + '</button>';
+  }).join('') + '</div>';
+  if (d.status === 'sponsor') {
+    h += '<div class="field"><label for="amt">How much sponsorship is needed (rand)</label><input id="amt" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 850" value="' + esc(d.sponsorAmount) + '" data-field="sponsorAmount"></div>' +
+      (price ? '<div class="quick"><button data-act="amt" data-v="' + price + '">Full ticket ' + fmtR(price) + '</button><button data-act="amt" data-v="' + Math.round(price / 2) + '">Half ' + fmtR(price / 2) + '</button><button data-act="amt" data-v="' + Math.round(price / 4) + '">Quarter ' + fmtR(price / 4) + '</button></div>' : '');
+  }
+  if (d.status === 'confirming') {
+    h += '<div class="field"><label for="cby">They will confirm by</label><input id="cby" type="date" value="' + esc(d.confirmBy) + '" data-field="confirmBy"></div>' +
+      '<div class="quick">' + [[3, 'In 3 days'], [7, 'Next week'], [14, 'In 2 weeks']].map(function (o) { var dt = new Date(); dt.setDate(dt.getDate() + o[0]); return '<button data-act="cby" data-v="' + isoDate(dt) + '">' + o[1] + '</button>'; }).join('') + (st.confirmDeadline ? '<button data-act="cby" data-v="' + esc(st.confirmDeadline) + '">Deadline ' + fmtDate(st.confirmDeadline) + '</button>' : '') + '</div>';
+  }
+  h += '</section>';
+  h += '<section><h4>Add a note</h4><div class="field"><textarea id="note" placeholder="Reason they can\'t come, when they will confirm, concerns, who to follow up with…" data-field="note">' + esc(d.note) + '</textarea></div></section>';
+  var ns = notesFor(p.id);
+  if (ns.length) h += '<section><h4>Notes so far</h4><div class="notes">' + ns.map(function (n) { return '<div class="note">' + esc(n.note) + '<div class="by">' + esc(n.author) + ', ' + fmtWhen(n.createdAt) + '</div></div>'; }).join('') + '</div></section>';
+  if (p.updatedAt) h += '<p class="muted" style="font-size:12.5px;margin:14px 0 0">Last updated by ' + esc(p.updatedBy || 'someone') + ', ' + fmtWhen(p.updatedAt) + '</p>';
+  h += '<div class="actions"><button class="btn secondary" data-act="closeSheet">Cancel</button><button class="btn" data-act="savePerson">Save</button></div>';
+  if (sh.kind === 'people' && isAdmin()) h += '<p style="margin:14px 0 0;text-align:center"><button class="muted" style="font-size:12.5px;font-weight:700;text-decoration:underline" data-act="archive">Remove ' + esc(p.name.split(' ')[0]) + ' from this tracker</button></p>';
+  return h;
+}
+
+function sheetMenu() {
+  var m = me(); var st = settings();
+  var items = '<button data-act="avatarPick"><span>Profile icon</span><span class="muted">' + (AV[(leaderById(m.leaderId) || {}).avatar] ? AV[leaderById(m.leaderId).avatar].name : 'pick a cartoon') + '</span></button>' + '<button data-act="reload"><span>Reload data</span><span class="muted">' + (S.data && S.data.loadedAt ? 'loaded ' + fmtWhen(S.data.loadedAt) : '') + '</span></button>' +
+    '<button data-act="add"><span>Add a young person</span><span class="muted">joins their RDG tab</span></button>' +
+    (isAdmin() ? '<button data-act="settings"><span>Camp settings</span><span class="muted">name, dates, ticket price</span></button>' : '') +
+    (S.outbox.length ? '<button data-act="sync"><span>Sync ' + S.outbox.length + ' saved change' + (S.outbox.length > 1 ? 's' : '') + '</span><span class="muted">waiting</span></button>' : '') +
+    '<button data-act="install"><span>Add to home screen</span><span class="muted">how to</span></button>' +
+    '<button data-act="signout"><span>Switch leader</span><span class="muted">sign out on this phone</span></button>';
+  return '<h2>' + esc(m.name) + '</h2><div class="sub">' + (isAdmin() ? 'Admin' : 'Leader') + ', ' + esc(st.tribe || 'Green tribe') + '</div><section><div class="menu">' + items + '</div></section>';
+}
+
+function sheetAvatar(sh) {
+  var mine = leaderById(me().leaderId) || {};
+  return '<h2>' + (sh.first ? 'Pick your camp critter' : 'Profile icon') + '</h2><div class="sub">' + (sh.first ? 'This is how the team will see you. You can change it any time from your profile.' : 'Shown next to your name for every leader') + '</div>' +
+    '<section><div class="avgrid">' + AVATARS.map(function (a) {
+      return '<button data-act="avatarSet" data-v="' + a.id + '" aria-pressed="' + (mine.avatar === a.id) + '" aria-label="' + a.name + '">' + avatarSvg(a.id, 64) + '<span>' + a.name + '</span></button>';
+    }).join('') + '<button data-act="avatarSet" data-v="" aria-pressed="' + (!mine.avatar) + '" aria-label="Use my initials"><span class="initsel">' + esc(initials(mine.name || me().name)) + '</span><span>Initials</span></button></div></section>' +
+    '<div class="actions"><button class="btn secondary" data-act="closeSheet">' + (sh.first ? 'Later' : 'Done') + '</button></div>';
+}
+
+function setAvatar(id) {
+  var mid = me().leaderId;
+  [leaders(), S.leaderList || []].forEach(function (list) { list.forEach(function (l) { if (l.id === mid) l.avatar = id; }); });
+  save(LS.data, S.data); save(LS.leaders, S.leaderList);
+  send({ action: 'setAvatar', avatar: id });
+  S.sheet = null; render(); toast(id ? 'Looking good, ' + AV[id].name.toLowerCase() + '!' : 'Back to initials');
+}
+
+function sheetSettings() {
+  var st = settings();
+  return '<h2>Camp settings</h2><div class="sub">Shown to every leader</div><section>' +
+    '<div class="field"><label for="s_campName">Camp name</label><input id="s_campName" value="' + esc(st.campName) + '"></div>' +
+    '<div class="field"><label for="s_campDates">Dates, as you want them shown</label><input id="s_campDates" placeholder="e.g. 7 to 11 December" value="' + esc(st.campDates) + '"></div>' +
+    '<div class="field"><label for="s_campStart">First day of camp (for the countdown)</label><input id="s_campStart" type="date" value="' + esc(st.campStart) + '"></div>' +
+    '<div class="field"><label for="s_ticketPrice">Ticket price (rand)</label><input id="s_ticketPrice" inputmode="numeric" value="' + esc(st.ticketPrice) + '"></div>' +
+    '<div class="field"><label for="s_confirmDeadline">Date everyone must confirm by</label><input id="s_confirmDeadline" type="date" value="' + esc(st.confirmDeadline) + '"></div>' +
+    '<div class="field"><label for="s_tribe">Tribe</label><input id="s_tribe" value="' + esc(st.tribe) + '"></div>' +
+    '<div class="field"><label for="s_joinCode">Team code leaders type when they first sign in</label><input id="s_joinCode" autocapitalize="characters" value="' + esc(st.joinCode || '') + '"></div>' +
+    '</section><div class="actions"><button class="btn secondary" data-act="closeSheet">Cancel</button><button class="btn" data-act="saveSettings">Save</button></div>';
+}
+
+function sheetAdd() {
+  var d = S.sheet.draft;
+  return '<h2>Add a young person</h2><div class="sub">For someone who is not on the Check ins list yet</div><section>' +
+    '<div class="field"><label for="a_name">Full name</label><input id="a_name" value="' + esc(d.name) + '" autocomplete="off"></div>' +
+    '<div class="field"><label>Gender</label><div class="seg"><button data-act="aGender" data-v="B" aria-pressed="' + (d.gender === 'B') + '">Boy</button><button data-act="aGender" data-v="G" aria-pressed="' + (d.gender === 'G') + '">Girl</button></div></div>' +
+    '<div class="field"><label>Grade in 2027, at camp (one up from this year)</label><div class="seg">' + [10, 11, 12].map(function (g) { return '<button data-act="aGrade" data-v="' + g + '" aria-pressed="' + (d.grade === g) + '">Gr ' + g + '</button>'; }).join('') + '</div></div>' +
+    '<div class="field"><label for="a_contact">Their number</label><input id="a_contact" inputmode="tel" value="' + esc(d.contact) + '"></div>' +
+    '<div class="field"><label for="a_gname">Parent or guardian name</label><input id="a_gname" value="' + esc(d.guardianName) + '"></div>' +
+    '<div class="field"><label for="a_gcontact">Parent or guardian number</label><input id="a_gcontact" inputmode="tel" value="' + esc(d.guardianContact) + '"></div>' +
+    '</section><div class="actions"><button class="btn secondary" data-act="closeSheet">Cancel</button><button class="btn" data-act="saveAdd">Add to ' + esc(RDG[d.gender + d.grade] ? RDG[d.gender + d.grade].label : 'tribe') + '</button></div>';
+}
+
+/* ------------------------------------------------------------------ */
+/* Actions                                                             */
+/* ------------------------------------------------------------------ */
+
+function openPerson(kind, id) {
+  var p = recordFor(kind, id); if (!p) return;
+  S.sheet = { type: 'person', kind: kind, id: id, draft: { status: p.status || 'none', sponsorAmount: p.sponsorAmount || '', confirmBy: p.confirmBy || '', note: '' } };
+  render();
+}
+function readDraftInputs() {
+  var d = S.sheet && S.sheet.draft; if (!d) return;
+  var a = $('#amt'); if (a) d.sponsorAmount = a.value;
+  var c = $('#cby'); if (c) d.confirmBy = c.value;
+  var n = $('#note'); if (n) d.note = n.value;
+  if (S.sheet.type === 'add') { ['name', 'contact', 'guardianName', 'guardianContact'].forEach(function (k) { var el = $('#a_' + (k === 'guardianName' ? 'gname' : k === 'guardianContact' ? 'gcontact' : k)); if (el) d[k] = el.value; }); }
+}
+
+function savePerson() {
+  readDraftInputs();
+  var sh = S.sheet; var p = recordFor(sh.kind, sh.id); if (!p) return;
+  var d = sh.draft;
+  var patch = { status: d.status, sponsorAmount: d.status === 'sponsor' ? (d.sponsorAmount === '' ? '' : Math.round(Number(d.sponsorAmount) || 0)) : (p.sponsorAmount || ''), confirmBy: d.status === 'confirming' ? d.confirmBy : '' };
+  var changed = patch.status !== (p.status || 'none') || String(patch.sponsorAmount) !== String(p.sponsorAmount || '') || patch.confirmBy !== (p.confirmBy || '');
+  var note = d.note.trim();
+  if (!changed && !note) { S.sheet = null; render(); return; }
+  var now = new Date().toISOString();
+  if (changed) {
+    Object.assign(p, patch, { updatedAt: now, updatedBy: me().name });
+    send({ action: 'updatePerson', kind: sh.kind, id: p.id, patch: patch }, function (d2) { if (d2.record) { ['status', 'sponsorAmount', 'confirmBy', 'updatedAt', 'updatedBy'].forEach(function (k) { if (d2.record[k] !== undefined) p[k] = d2.record[k]; }); } save(LS.data, S.data); });
+  }
+  if (note) {
+    var n = { noteId: 'local' + uid(), personId: p.id, kind: sh.kind, note: note, author: me().name, createdAt: now };
+    S.data.notes = S.data.notes || []; S.data.notes.push(n); p.latestNote = note; p.updatedAt = now; p.updatedBy = me().name;
+    send({ action: 'addNote', kind: sh.kind, id: p.id, note: note }, function (d2) { if (d2.note) { Object.assign(n, d2.note); p.latestNote = d2.note.note; } save(LS.data, S.data); });
+  }
+  save(LS.data, S.data);
+  S.sheet = null; render(); toast('Saved');
+}
+
+function saveAdd() {
+  readDraftInputs();
+  var d = S.sheet.draft;
+  if (!d.name.trim()) { toast('Please enter a name', true); return; }
+  var person = { name: d.name.trim(), gender: d.gender, grade: d.grade, contact: d.contact.trim(), guardianName: d.guardianName.trim(), guardianRel: '', guardianContact: d.guardianContact.trim() };
+  var temp = Object.assign({ id: 'tmp' + uid(), rdg: d.gender + d.grade, isNew: true, lastSeen: '', fridays: 0, status: 'none', sponsorAmount: '', confirmBy: '', latestNote: '', updatedAt: new Date().toISOString(), updatedBy: me().name }, person);
+  S.data.people.push(temp); save(LS.data, S.data);
+  send({ action: 'addPerson', person: person }, function (d2) { if (d2.record) { Object.assign(temp, d2.record); save(LS.data, S.data); render(); } });
+  S.tab = temp.rdg; localStorage.setItem(LS.tab, S.tab); S.sheet = null; S.filter = ''; S.search = ''; render(); toast('Added ' + temp.name.split(' ')[0]);
+}
+
+function saveSettings() {
+  var st = {}; ['campName', 'campDates', 'campStart', 'ticketPrice', 'confirmDeadline', 'tribe', 'joinCode'].forEach(function (k) { var el = $('#s_' + k); if (el && !(k === 'joinCode' && !el.value.trim())) st[k] = el.value.trim(); });
+  Object.assign(S.data.settings, st); save(LS.data, S.data);
+  send({ action: 'updateSettings', settings: st }, function (d2) { if (d2.settings) { S.data.settings = d2.settings; save(LS.data, S.data); render(); } });
+  S.sheet = null; render(); toast('Settings saved');
+}
+
+function doLogin() {
+  var pinEl = $('#pin'); var pin = pinEl ? pinEl.value.trim() : S.signin.pin;
+  var jc = $('#joincode'); S.signin.joinCode = jc ? jc.value.trim() : (S.signin.joinCode || '');
+  S.signin.pin = pin;
+  if (!/^\d{4,6}$/.test(pin)) { S.signin.error = 'Your PIN needs 4 to 6 digits.'; render(); return; }
+  S.signin.error = ''; render();
+  var btn = $('[data-act="login"]'); if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
+  apiPost({ action: 'login', leaderId: S.signin.leaderId, pin: pin, joinCode: S.signin.joinCode }).then(function (d) {
+    S.session = { leaderId: d.leader.id, name: d.leader.name, role: d.leader.role, token: d.token };
+    save(LS.session, S.session);
+    (S.leaderList || []).forEach(function (x) { if (x.id === d.leader.id) x.hasPin = true; }); save(LS.leaders, S.leaderList);
+    S.signin = { leaderId: null, pin: '', error: '' };
+    toast(d.created ? 'PIN set. Welcome, ' + d.leader.name.split(' ')[0] : 'Welcome back, ' + d.leader.name.split(' ')[0]);
+    if (d.data) { applyData(d.data); render(); } else { refresh(); }
+    if (d.created && !(d.leader && d.leader.avatar)) { S.sheet = { type: 'avatar', first: true }; render(); }
+    actOpen();
+  }).catch(function (e) { S.signin.error = e.message === 'Wrong PIN' ? 'That PIN is not right. Try again or ask ' + adminNames() + ' to reset it.' : e.message === 'Team code is not right' ? 'That team code is not right. Ask ' + adminNames() + ' for the code.' : (e.message || 'Could not sign in'); render(); });
+}
+
+function signout(keepQuiet) {
+  if (!keepQuiet) { actStop(); actFlush(true); }
+  S.session = null; S.data = null; S.activity = null; S.sheet = null; S.outbox = [];
+  localStorage.removeItem(LS.session); localStorage.removeItem(LS.data); localStorage.removeItem(LS.outbox);
+  ACT.logged = false; ACT.sessionId = uid(); ACT.entries = []; ACT.cur = null;
+  render(); loadLeaderList();
+}
+
+function installHelp() {
+  var ios = /iPhone|iPad/.test(navigator.userAgent);
+  S.sheet = { type: 'install' };
+  var msg = ios ? 'In Safari, tap the Share button (the square with an arrow), then "Add to Home Screen", then Add. The tracker will open like an app from your home screen.' :
+    'In Chrome, tap the three dots at the top right, then "Add to Home screen" or "Install app". The tracker will open like an app from your home screen.';
+  app.insertAdjacentHTML('beforeend', '<div class="scrim" data-act="closeSheet"><div class="sheet" data-stop="1"><div class="grab"></div><h2>Add to your home screen</h2><div class="sub">Free, no app store needed</div><section><p style="margin:0">' + msg + '</p></section><div class="actions"><button class="btn" data-act="closeSheet">Got it</button></div></div></div>');
+}
+
+/* Event delegation */
+document.addEventListener('click', function (ev) {
+  var t = ev.target.closest('[data-act]'); if (!t) return;
+  var act = t.getAttribute('data-act');
+  if (act === 'closeSheet') { if (ev.target.closest('[data-stop]') && !ev.target.closest('[data-act="closeSheet"]')) return; S.sheet = null; render(); return; }
+  switch (act) {
+    case 'saveApi': { var v = ($('#apiurl').value || '').trim(); if (v.indexOf('https://script.google.com/') !== 0) { toast('That does not look like an Apps Script web app URL', true); return; } S.api = v; localStorage.setItem(LS.api, v); render(); refresh(); break; }
+    case 'tab': { var tab = t.getAttribute('data-tab'); if (tab !== S.tab) { actStop(); S.tab = tab; localStorage.setItem(LS.tab, tab); if (RDG[tab] || tab === 'leaders') { S.group = tab; localStorage.setItem('camp.group', tab); } S.filter = ''; S.search = ''; actStart(tab); actFlush(false); } render(); window.scrollTo(0, 0); break; }
+    case 'searchGo': { var g = RDG[S.group] ? S.group : (RDG[S.tab] ? S.tab : 'B10'); if (S.tab !== g) { actStop(); S.tab = g; localStorage.setItem(LS.tab, g); actStart(g); } S.sheet = null; render(); setTimeout(function () { var el = $('[data-act="search"]'); if (el) el.focus(); }, 30); break; }
+    case 'filter': { var code = t.getAttribute('data-code'); S.filter = S.filter === code ? '' : code; render(); break; }
+    case 'open': openPerson(t.getAttribute('data-kind'), t.getAttribute('data-id')); break;
+    case 'setStatus': readDraftInputs(); S.sheet.draft.status = t.getAttribute('data-code'); render(); break;
+    case 'amt': readDraftInputs(); S.sheet.draft.sponsorAmount = t.getAttribute('data-v'); render(); break;
+    case 'cby': readDraftInputs(); S.sheet.draft.confirmBy = t.getAttribute('data-v'); render(); break;
+    case 'savePerson': savePerson(); break;
+    case 'archive': if (confirm('Remove this person from the camp tracker? They stay in the Check ins system.')) { var p = recordFor('people', S.sheet.id); S.data.people = people().filter(function (x) { return x.id !== p.id; }); save(LS.data, S.data); send({ action: 'updatePerson', kind: 'people', id: p.id, patch: {}, archive: true }); S.sheet = null; render(); toast('Removed'); } break;
+    case 'menu': S.sheet = { type: 'menu' }; render(); break;
+    case 'settings': S.sheet = { type: 'settings' }; render(); break;
+    case 'saveSettings': saveSettings(); break;
+    case 'avatarPick': S.sheet = { type: 'avatar' }; render(); break;
+    case 'avatarSet': setAvatar(t.getAttribute('data-v')); break;
+    case 'add': S.sheet = { type: 'add', draft: { name: '', gender: RDG[S.tab] ? S.tab[0] : 'B', grade: RDG[S.tab] ? Number(S.tab.slice(1)) : 10, contact: '', guardianName: '', guardianContact: '' } }; render(); setTimeout(function () { var el = $('#a_name'); if (el) el.focus(); }, 50); break;
+    case 'aGender': readDraftInputs(); S.sheet.draft.gender = t.getAttribute('data-v'); render(); break;
+    case 'aGrade': readDraftInputs(); S.sheet.draft.grade = Number(t.getAttribute('data-v')); render(); break;
+    case 'saveAdd': saveAdd(); break;
+    case 'reload': S.sheet = null; refresh(); break;
+    case 'reloadPage': location.reload(); break;
+    case 'sync': S.sheet = null; render(); flushOutbox(); break;
+    case 'signout': signout(); break;
+    case 'install': S.sheet = null; render(); installHelp(); break;
+    case 'pick': S.signin = { leaderId: t.getAttribute('data-id'), pin: '', error: '' }; render(); setTimeout(function () { var el = $('#pin'); if (el) el.focus(); }, 50); break;
+    case 'unpick': S.signin = { leaderId: null, pin: '', error: '' }; render(); break;
+    case 'login': doLogin(); break;
+    case 'actRange': S.actRange = t.getAttribute('data-v'); render(); break;
+    case 'actReload': S.activity = null; render(); break;
+    case 'copySummary': { var txt = summaryText(); S.sheet = { type: 'summary' }; render(); if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function () { toast('Copied'); }, function () {}); break; }
+  }
+});
+document.addEventListener('input', function (ev) {
+  var t = ev.target;
+  if (t.getAttribute('data-act') === 'search') { S.search = t.value; var pos = t.selectionStart; var panelPos = window.scrollY; render(); var el = $('[data-act="search"]'); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (e) {} } window.scrollTo(0, panelPos); }
+});
+document.addEventListener('keydown', function (ev) {
+  if (ev.key === 'Enter' && ev.target.id === 'pin') doLogin();
+  if (ev.key === 'Escape' && S.sheet) { S.sheet = null; render(); }
+});
+
+/* ------------------------------------------------------------------ */
+/* Start                                                               */
+/* ------------------------------------------------------------------ */
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  var hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadController) { S.updateReady = true; render(); } hadController = true; });
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
+render();
+if (S.api) {
+  if (S.session) { actOpen(); flushOutbox(); }
+  refresh(!!S.data);
+}
+if (S.session && S.data) { /* make sure cached data from an old build has the shapes we expect */ S.data.notes = S.data.notes || []; S.data.people = S.data.people || []; S.data.leaders = S.data.leaders || []; S.data.settings = S.data.settings || {}; }
+})();
+
+</script>
+</body>
+</html>
