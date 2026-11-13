@@ -1,6 +1,6 @@
 /* Summer Camp Rally tracker service worker: caches the app shell so it opens instantly and works offline.
    Data is never cached here; the page keeps its own copy of the last loaded data. */
-var VERSION = 'camp-shell-v4';
+var VERSION = 'camp-shell-v6';
 var SHELL = ["./", "./index.html", "./config.js", "./manifest.json", "./patch.png", "./icon-180.png", "./icon-192.png", "./icon-512.png", "./fonts/accent-italic.woff2", "./fonts/display-700.woff2", "./fonts/display-800.woff2", "./fonts/text-400.woff2", "./fonts/text-500.woff2", "./fonts/text-600.woff2", "./fonts/text-700.woff2"];
 
 self.addEventListener('install', function (e) {
