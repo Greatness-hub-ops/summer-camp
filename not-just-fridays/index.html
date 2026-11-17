@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en-ZA" data-field="amber">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e8a13f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fridays">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Not Just Fridays</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=EB+Garamond:ital,wght@0,400..700;1,400..600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Design read: a one-screen card game for a church Connect group.
+     The night is told in three flat colour fields: golden hour, blue hour, lights low.
+     The interface is set in a grotesque. The words of Jesus are set in a Bible serif and
+     printed in red, the way a red-letter Bible prints them. Red is used for nothing else
+     except the Friday tile in the week mark.
+     Dials: variance 6, motion 5, density 3. One committed world, no light and dark pair:
+     the field colour is the level, so the page follows the night and not the viewer theme.
+     Radius rule: cards 18px, text fields 12px, sheet 24px, every button a full pill.
+     Layers: fields 0, screens 1, sheet 10, grain 20. */
+  --paper:#f1f2ee;
+  --paper-2:rgba(241,242,238,.74);
+  --ink:#14151c;
+  --ink-2:rgba(20,21,28,.72);
+  --red:#c2202f;
+  --amber:#e8a13f;
+  --cobalt:#2647b0;
+  --dark:#0e0e13;
+  --sans:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --serif:"EB Garamond","Iowan Old Style","Palatino Linotype",Georgia,serif;
+
+  /* field tokens, amber first */
+  --field:var(--amber);
+  --on:var(--ink);
+  --on-2:#4a3410;
+  --edge:rgba(20,21,28,.62);
+  --soft:rgba(20,21,28,.14);
+  --btn-bg:var(--ink);
+  --btn-fg:var(--paper);
+  --shadow:rgba(104,56,6,.44);
+  --back-edge:rgba(241,242,238,0);
+  color-scheme:light;
+}
+:root[data-field="cobalt"]{
+  --field:var(--cobalt);
+  --on:var(--paper);
+  --on-2:#c9d3f5;
+  --edge:rgba(241,242,238,.66);
+  --soft:rgba(241,242,238,.2);
+  --btn-bg:var(--paper);
+  --btn-fg:var(--ink);
+  --shadow:rgba(5,10,48,.6);
+  --back-edge:rgba(241,242,238,.16);
+  color-scheme:dark;
+}
+:root[data-field="dark"]{
+  --field:var(--dark);
+  --on:var(--paper);
+  --on-2:#a9abb8;
+  --edge:rgba(241,242,238,.6);
+  --soft:rgba(241,242,238,.16);
+  --btn-bg:var(--paper);
+  --btn-fg:var(--ink);
+  --shadow:rgba(0,0,0,.6);
+  --back-edge:rgba(241,242,238,.28);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--field);color:var(--on);
+  font-family:var(--sans);font-size:1rem;line-height:1.45;
+  -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;
+  overflow:hidden;
+}
+h1,h2,h3,p,ol,ul,fieldset,legend{margin:0;padding:0}
+ol,ul{list-style:none}
+fieldset{border:0;min-width:0}
+button,input{font:inherit;color:inherit}
+button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+[hidden]{display:none !important}
+:focus-visible{outline:3px solid var(--on);outline-offset:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* ---------- the three fields ---------- */
+.fields{position:fixed;inset:0;z-index:0;pointer-events:none}
+.fields i{position:absolute;inset:0;opacity:0;transition:opacity .5s ease}
+.fields .amber{background:linear-gradient(180deg,#ecab4f 0%,#e39632 100%)}
+.fields .cobalt{background:linear-gradient(180deg,#2b4ebd 0%,#203c9c 100%)}
+.fields .dark{background:linear-gradient(180deg,#121219 0%,#0b0b10 100%)}
+:root[data-field="amber"] .fields .amber,
+:root[data-field="cobalt"] .fields .cobalt,
+:root[data-field="dark"] .fields .dark{opacity:1}
+.grain{
+  position:fixed;inset:0;z-index:20;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- shared pieces ---------- */
+.screen{position:absolute;inset:0;z-index:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;animation:fade .3s ease both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.6em;
+  min-height:52px;padding:0 1.5rem;border:0;border-radius:999px;
+  font:600 1rem/1 var(--sans);white-space:nowrap;cursor:pointer;
+  transition:transform .15s cubic-bezier(.16,1,.3,1),opacity .15s ease;
+}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.primary{background:var(--btn-bg);color:var(--btn-fg)}
+.btn.ghost{background:transparent;color:var(--on);box-shadow:inset 0 0 0 1.5px var(--edge)}
+.btn.text{background:transparent;color:var(--on);min-height:44px;padding:0 1rem;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:.22em}
+.btn.small{min-height:44px;padding:0 1.1rem;font-size:.9375rem}
+.is-off{visibility:hidden}
+
+.week{display:inline-grid;grid-auto-flow:column;gap:.34em;font:700 .8125rem/1 var(--sans)}
+.week i{
+  display:grid;place-items:center;width:1.75em;height:2.35em;border-radius:.32em;
+  font-style:normal;box-shadow:inset 0 0 0 1.5px currentColor;opacity:.78;
+}
+.week i.fri,.week.all i{background:var(--paper);color:var(--red);box-shadow:none;opacity:1}
+
+/* ---------- start ---------- */
+.start-in{
+  display:grid;gap:36px;max-width:1120px;margin:0 auto;padding:calc(22px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+.start-main{display:grid;gap:14px;justify-items:start;min-width:0}
+.wordmark{font:800 clamp(3.25rem,15.5vw,6.25rem)/.86 var(--sans);letter-spacing:-.045em;margin-top:2px}
+.lede{font-size:1.0625rem;line-height:1.4;max-width:34ch}
+
+.setup{display:grid;gap:14px;width:100%;max-width:480px;margin-top:6px}
+.pair{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:flex-end}
+.field{display:grid;gap:8px}
+.field > legend,.field > .label,.names label{font-weight:600;font-size:.9375rem}
+.field > legend{margin-bottom:8px}
+
+.seg{display:inline-grid;grid-auto-flow:column;padding:4px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--edge)}
+.seg label{position:relative;display:block}
+.seg input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.seg span{display:grid;place-items:center;min-width:50px;height:44px;padding:0 .8rem;border-radius:999px;font-weight:600;font-variant-numeric:tabular-nums}
+.seg input:checked + span{background:var(--btn-bg);color:var(--btn-fg)}
+.seg input:focus-visible + span{outline:3px solid var(--on);outline-offset:2px}
+
+.stepper{display:inline-grid;grid-template-columns:44px minmax(2.6em,auto) 44px;align-items:center;padding:4px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--edge)}
+.stepper button{width:44px;height:44px;border:0;border-radius:999px;background:transparent;font-size:1.375rem;font-weight:500;line-height:1;cursor:pointer}
+.stepper button[disabled]{opacity:.35;cursor:default}
+.stepper output{text-align:center;font-weight:700;font-size:1.125rem;font-variant-numeric:tabular-nums}
+
+.estimate{font-size:.9375rem;color:var(--on-2);font-weight:500}
+
+.names summary{display:inline-block;cursor:pointer;font-weight:600;font-size:.9375rem;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:.22em;list-style:none;padding:6px 0}
+.names summary::-webkit-details-marker{display:none}
+.names-body{display:grid;gap:8px;padding:8px 0 4px}
+.name-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.name-row input{
+  height:48px;padding:0 14px;border-radius:12px;border:1.5px solid var(--ink);
+  background:var(--paper);color:var(--ink);font-size:1rem;min-width:0;
+}
+.help{font-size:.875rem;color:var(--on-2)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:2px;padding-left:14px;border-radius:999px;background:var(--paper);color:var(--ink);font-weight:600;font-size:.9375rem}
+.chip-x{width:40px;height:40px;border:0;background:transparent;border-radius:999px;font-size:1.25rem;line-height:1;cursor:pointer;color:var(--ink)}
+.chip-x:focus-visible{outline-color:var(--ink);outline-offset:-4px}
+
+.start-go{display:grid;gap:10px;margin-top:4px}
+.start-go .btn{width:100%;min-height:58px;font-size:1.0625rem}
+.resume{display:grid;gap:8px;padding-bottom:6px}
+.resume .btn{width:100%}
+.resume-note{font-size:.875rem;color:var(--on-2)}
+
+.fan{position:relative;width:min(100%,300px);height:calc(var(--ch,400px) * 1.06);justify-self:center;--cw:270px;--ch:384px}
+.sample{position:absolute;width:var(--cw);height:var(--ch)}
+.sample.s2{left:50%;top:0;margin-left:calc(var(--cw) / -2);transform:rotate(-1.5deg);z-index:2}
+.sample.s1,.sample.s3{display:none}
+
+.start-more{display:grid;gap:36px}
+.start-more h2{font:700 1.375rem/1.15 var(--sans);letter-spacing:-.02em;margin-bottom:14px}
+.rules-list{display:grid;gap:12px;max-width:46ch}
+.rules-list strong{font-weight:700}
+.arc-list{display:grid;gap:14px;max-width:46ch}
+.arc-list li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:12px;row-gap:2px;align-items:baseline}
+.arc-chip{width:1.05em;height:1.45em;border-radius:.22em;align-self:center;grid-row:span 2;box-shadow:0 0 0 1.5px var(--paper)}
+.arc-chip.c1{background:var(--amber)}.arc-chip.c2{background:var(--cobalt)}.arc-chip.c3{background:var(--dark)}.arc-chip.c4{background:var(--paper)}
+.arc-name{font-weight:700}
+.arc-min{font-weight:600;font-variant-numeric:tabular-nums}
+.arc-blurb{grid-column:2 / 4;color:var(--on-2);font-size:.9375rem}
+.fine{font-size:.9375rem;color:var(--on-2);max-width:46ch;margin-top:16px}
+
+@media (min-width:860px){
+  .start-in{grid-template-columns:minmax(0,500px) minmax(0,1fr);column-gap:56px;row-gap:56px;padding:44px 40px 72px;align-items:start}
+  .start-more{grid-column:1 / -1;grid-template-columns:1fr 1fr;column-gap:56px}
+  .fan{width:min(100%,540px);height:calc(var(--ch) * 1.16);margin-top:28px}
+  .sample.s1,.sample.s3{display:flex}
+  .sample.s1{left:0;top:9%;transform:rotate(-8deg)}
+  .sample.s3{right:0;top:11%;transform:rotate(7deg)}
+}
+
+/* ---------- play ---------- */
+.play{display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;padding:calc(12px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));overflow:hidden}
+.rail{
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto;
+  grid-template-areas:"level clock menu" "segs segs segs";
+  align-items:center;column-gap:14px;row-gap:10px;
+}
+.rail-brand{display:none;grid-area:brand}
+.rail-level{grid-area:level;min-width:0}
+.lvl-name{font:800 1.375rem/1 var(--sans);letter-spacing:-.03em;white-space:nowrap}
+.lvl-blurb{display:none}
+.clock{grid-area:clock;font:600 1rem/1 var(--sans);font-variant-numeric:tabular-nums;white-space:nowrap}
+.clock small{font-size:.875rem;font-weight:500;color:var(--on-2)}
+#menu-btn{grid-area:menu}
+.segs{grid-area:segs;display:flex;gap:4px;height:4px}
+.segs i{position:relative;flex:1 1 0;min-width:0;border-radius:2px;background:var(--soft);overflow:hidden}
+.segs b{position:absolute;inset:0;background:var(--on);transform:scaleX(0);transform-origin:left center;transition:transform .5s linear}
+
+.table{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:10px;min-height:0;justify-items:center}
+.stage{position:relative;width:100%;min-height:0;--cw:300px;--ch:440px}
+.controls{position:relative;z-index:2;display:grid;justify-items:center;gap:0;width:min(100%,640px)}
+.controls .primary{width:min(100%,var(--bw,470px));min-height:58px;font-size:1.0625rem}
+
+.under,.card{
+  position:absolute;left:50%;top:50%;width:var(--cw);height:var(--ch);
+  margin:calc(var(--ch) / -2) 0 0 calc(var(--cw) / -2);
+}
+.under{border-radius:18px;background:var(--ink);box-shadow:0 0 0 1px var(--back-edge);transition:opacity .3s ease}
+.under.u1{transform:translate(1.4%,.9%) rotate(1.7deg)}
+.under.u2{transform:translate(-1.1%,1.5%) rotate(-2.3deg)}
+.play[data-stage="intro"] .under{opacity:0}
+
+.card{perspective:1600px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.card.is-up{cursor:default}
+.card-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .62s cubic-bezier(.2,.75,.2,1)}
+.card.is-up .card-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face.front{transform:rotateY(180deg)}
+.face.back{transform:rotateY(0deg);-webkit-user-select:none;user-select:none}
+.card.in{animation:dealIn .44s cubic-bezier(.16,1,.3,1) both}
+.card.out{animation:dealOut .3s cubic-bezier(.5,0,1,1) both;pointer-events:none}
+@keyframes dealIn{from{opacity:0;transform:translateY(7%) rotate(3deg) scale(.96)}to{opacity:1;transform:none}}
+@keyframes dealOut{to{opacity:0;transform:translateX(-44%) rotate(-9deg)}}
+
+/* card faces */
+.cf{
+  display:flex;flex-direction:column;gap:calc(var(--cw) * .03);
+  padding:calc(var(--cw) * .078) calc(var(--cw) * .085);
+  border-radius:18px;overflow:hidden;
+}
+.cf.paper{background:var(--paper);color:var(--ink);box-shadow:0 28px 46px -24px var(--shadow),0 2px 5px rgba(0,0,0,.16)}
+.cf.inkface{background:var(--ink);color:var(--paper);box-shadow:0 28px 46px -24px var(--shadow),0 0 0 1px var(--back-edge)}
+.c-top{display:flex;justify-content:space-between;align-items:center;gap:12px;font:600 calc(var(--cw) * .042)/1.2 var(--sans)}
+.c-level{display:inline-flex;align-items:center;gap:.55em}
+.glyph{display:inline-block;width:.82em;height:.82em;border-radius:50%;box-shadow:inset 0 0 0 1.5px currentColor}
+.glyph.g1{background:currentColor}
+.glyph.g2{background:linear-gradient(90deg,currentColor 50%,transparent 50%)}
+.c-ref{color:var(--ink-2);font-variant-numeric:tabular-nums}
+.c-body{
+  flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:calc(var(--cw) * .045);overflow:hidden;
+  margin:0 calc(var(--cw) * -.04);padding:0 calc(var(--cw) * .04); /* room for the hanging quote mark */
+}
+.cf.tight .c-body{justify-content:flex-start;overflow-y:auto}
+.lead,.tail{font:italic 400 calc(var(--cw) * .064)/1.24 var(--serif);text-wrap:pretty}
+.ask{font:500 2rem/1.08 var(--serif);color:var(--red);letter-spacing:-.012em;text-indent:-.42em;padding-left:.02em;text-wrap:balance}
+.c-foot{display:grid;gap:.4em;min-height:1.25em;font:700 calc(var(--cw) * .045)/1.2 var(--sans)}
+.c-hint{font:500 calc(var(--cw) * .042)/1.3 var(--sans);color:var(--ink-2)}
+
+.selah-word{font:italic 500 calc(var(--cw) * .2)/1.1 var(--serif);letter-spacing:-.02em;padding-bottom:.05em}
+.act{font:500 1.4rem/1.25 var(--sans);letter-spacing:-.01em;text-wrap:pretty}
+.timer{
+  align-self:flex-start;display:inline-flex;align-items:center;gap:.7em;
+  min-height:46px;padding:0 1.2rem;border:0;border-radius:999px;cursor:pointer;
+  background:transparent;color:var(--paper);box-shadow:inset 0 0 0 1.5px var(--paper-2);
+  font:600 calc(var(--cw) * .045)/1 var(--sans);font-variant-numeric:tabular-nums;
+}
+.timer:focus-visible{outline-color:var(--paper)}
+.timer.done{box-shadow:none;padding-left:0;cursor:default}
+.cf.selah .c-hint{color:var(--paper-2)}
+
+.close-title{font:800 calc(var(--cw) * .13)/.95 var(--sans);letter-spacing:-.04em}
+.close-steps{display:grid;gap:.7em;counter-reset:s;font:500 1.2rem/1.3 var(--sans)}
+.close-steps li{display:grid;grid-template-columns:1.5em minmax(0,1fr);counter-increment:s}
+.close-steps li::before{content:counter(s);font-weight:800}
+
+.back{justify-content:space-between}
+.b-for,.b-hint{font:600 calc(var(--cw) * .046)/1.2 var(--sans);color:var(--paper-2);white-space:nowrap}
+.b-name{font:800 calc(var(--cw) * .17)/.95 var(--sans);letter-spacing:-.04em;margin-top:.08em;overflow-wrap:anywhere}
+.b-bot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.b-bot .week{font-size:calc(var(--cw) * .034)}
+
+/* level intro */
+.intro{
+  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:18px;
+  max-width:560px;margin:0 auto;padding:0 4px;animation:rise .55s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.intro-name{font:800 clamp(4rem,21vw,8rem)/.84 var(--sans);letter-spacing:-.05em}
+.intro-text{font-size:1.25rem;line-height:1.35;max-width:26ch;font-weight:500}
+.intro-note{font-size:.9375rem;color:var(--on-2);max-width:34ch}
+
+@media (min-width:900px){
+  .play{grid-template-columns:minmax(250px,320px) minmax(0,1fr);grid-template-rows:minmax(0,1fr);column-gap:48px;padding:36px 44px}
+  .rail{
+    grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto auto auto 1fr auto;
+    grid-template-areas:"brand" "." "level" "segs" "clock" "." "menu";row-gap:0;align-items:start;
+  }
+  .rail-brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+  .rail-brand .week{font-size:.6875rem}
+  .rail-level{margin-bottom:26px}
+  .lvl-name{font-size:clamp(2.75rem,4.4vw,4rem);line-height:.9;white-space:normal;letter-spacing:-.045em}
+  .lvl-blurb{display:block;margin-top:14px;font-size:1.0625rem;max-width:22ch;color:var(--on-2)}
+  .play[data-stage="intro"] .rail-level{visibility:hidden}
+  .segs{margin-bottom:14px;height:5px}
+  .clock{font-size:1.75rem;font-weight:700;letter-spacing:-.02em}
+  .clock small{font-size:1rem}
+  #menu-btn{justify-self:start}
+  .intro-name{font-size:clamp(5rem,9.5vw,9.5rem)}
+  .intro-text{font-size:1.5rem}
+}
+
+@media (max-height:520px) and (min-width:560px){
+  .play{grid-template-columns:minmax(170px,220px) minmax(0,1fr);grid-template-rows:minmax(0,1fr);column-gap:20px;padding:12px 16px}
+  .rail{
+    grid-template-columns:minmax(0,1fr);grid-template-rows:none;
+    grid-template-areas:"level" "segs" "clock" "menu";align-content:center;align-items:start;row-gap:12px;
+  }
+  .rail-brand,.lvl-blurb{display:none}
+  .rail-level{margin-bottom:0}
+  .play[data-stage="intro"] .rail-level{visibility:hidden}
+  .lvl-name{font-size:1.5rem;line-height:1;white-space:normal;letter-spacing:-.03em}
+  .segs{margin-bottom:0;height:4px}
+  .clock{font-size:1.125rem;font-weight:600;letter-spacing:0}
+  .clock small{font-size:.875rem}
+  #menu-btn{justify-self:start}
+  .table{grid-template-columns:minmax(0,1fr) minmax(150px,200px);grid-template-rows:minmax(0,1fr);align-items:stretch;column-gap:16px}
+  .controls{width:100%;align-self:center}
+  .intro{gap:10px}
+  .intro-name{font-size:clamp(2.5rem,17vh,4.5rem)}
+  .intro-text{font-size:1rem}
+  .intro-note{font-size:.875rem}
+}
+
+/* ---------- menu sheet ---------- */
+.sheet-wrap{position:fixed;inset:0;z-index:10;display:grid;align-items:end;justify-items:center}
+.scrim{position:absolute;inset:0;background:rgba(8,8,12,.6);animation:fade .2s ease both}
+.sheet{
+  position:relative;width:100%;max-width:520px;max-height:94%;overflow-y:auto;
+  background:var(--paper);color:var(--ink);border-radius:24px 24px 0 0;padding:22px 18px 18px;
+  display:grid;gap:14px;animation:sheetUp .32s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes sheetUp{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.sheet h2{font:800 1.5rem/1 var(--sans);letter-spacing:-.03em}
+.sheet :focus-visible{outline-color:var(--ink)}
+.menu{display:grid;gap:2px}
+.menu + .menu{padding-top:12px;border-top:1.5px solid rgba(20,21,28,.14)}
+.menu button{
+  display:grid;gap:3px;width:100%;padding:11px 10px;border:0;border-radius:12px;
+  background:transparent;color:var(--ink);text-align:left;cursor:pointer;
+}
+.menu button[disabled]{opacity:.38;cursor:default}
+.menu .m-t{font-weight:700}
+.menu .m-d{font-size:.875rem;color:var(--ink-2)}
+.sheet .btn.primary{background:var(--ink);color:var(--paper);width:100%}
+@media (min-width:700px){
+  .sheet-wrap{align-items:center}
+  .sheet{border-radius:24px}
+}
+
+/* ---------- end ---------- */
+.end-in{min-height:100%;display:grid;align-content:center;justify-items:start;gap:20px;max-width:700px;margin:0 auto;padding:40px 20px}
+.end .week{font-size:1.125rem}
+.end .week i{animation:turn .55s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i) * 90ms + 250ms)}
+@keyframes turn{from{transform:rotateY(88deg);opacity:.3}to{transform:none;opacity:1}}
+.end h1{font:800 clamp(3.25rem,14vw,6.5rem)/.86 var(--sans);letter-spacing:-.045em}
+.end .lede{max-width:36ch;font-size:1.125rem}
+.stats{font-weight:600;font-variant-numeric:tabular-nums;color:var(--on-2)}
+.end-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+
+@media (prefers-reduced-motion:reduce){
+  .screen,.intro,.scrim,.sheet,.card.in,.card.out,.end .week i{animation:none}
+  .card-inner,.fields i,.btn,.segs b,.under{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="fields" aria-hidden="true"><i class="amber"></i><i class="cobalt"></i><i class="dark"></i></div>
+
+<!-- start -->
+<main class="screen start" id="start">
+  <div class="start-in">
+    <div class="start-main">
+      <span class="week" aria-hidden="true"><i>M</i><i>T</i><i>W</i><i>T</i><i class="fri">F</i><i>S</i><i>S</i></span>
+      <h1 class="wordmark">Not Just<br>Fridays</h1>
+      <p class="lede">A conversation card game for Connect. Questions Jesus might ask you, from golden hour to lights low.</p>
+
+      <form class="setup" id="setup" novalidate>
+        <div class="resume" id="resume" hidden>
+          <button type="button" class="btn ghost" id="resume-btn">Carry on with the last game</button>
+          <p class="resume-note" id="resume-note"></p>
+        </div>
+        <div class="pair">
+          <fieldset class="field">
+            <legend>Minutes tonight</legend>
+            <div class="seg">
+              <label><input type="radio" name="mins" id="mins-20" value="20"><span>20</span></label>
+              <label><input type="radio" name="mins" id="mins-30" value="30" checked><span>30</span></label>
+              <label><input type="radio" name="mins" id="mins-40" value="40"><span>40</span></label>
+            </div>
+          </fieldset>
+          <div class="field">
+            <span class="label" id="count-label">People</span>
+            <div class="stepper" role="group" aria-labelledby="count-label">
+              <button type="button" id="count-down" aria-label="One person fewer">&minus;</button>
+              <output id="count" aria-live="polite">11</output>
+              <button type="button" id="count-up" aria-label="One person more">+</button>
+            </div>
+          </div>
+        </div>
+        <p class="estimate" id="estimate"></p>
+
+        <details class="names" id="names">
+          <summary>Add names so the deck picks who answers</summary>
+          <div class="names-body">
+            <label for="name-input">Name</label>
+            <div class="name-row">
+              <input type="text" id="name-input" autocomplete="off" autocapitalize="words" enterkeyhint="done" aria-describedby="name-help">
+              <button type="button" class="btn ghost small" id="name-add">Add</button>
+            </div>
+            <p class="help" id="name-help"></p>
+            <ul class="chips" id="chips"></ul>
+          </div>
+        </details>
+
+        <div class="start-go">
+          <button type="submit" class="btn primary" id="start-btn">Start the night</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="fan" id="fan" aria-hidden="true"></div>
+
+    <div class="start-more">
+      <section>
+        <h2>House rules</h2>
+        <ul class="rules-list">
+          <li><strong>Read it out loud.</strong> Then answer as honestly as you can.</li>
+          <li><strong>Listen.</strong> No advice, no fixing and no interrupting while someone answers.</li>
+          <li><strong>Pass freely.</strong> Anyone can pass or ask for a different card. No reason needed.</li>
+          <li><strong>Keep it here.</strong> What is shared in this room stays in this room.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>How the night runs</h2>
+        <ol class="arc-list" id="arc"></ol>
+        <p class="fine" id="fine"></p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- play -->
+<main class="screen play" id="play" data-stage="intro" hidden>
+  <header class="rail">
+    <div class="rail-brand"><span class="week" aria-hidden="true"><i>M</i><i>T</i><i>W</i><i>T</i><i class="fri">F</i><i>S</i><i>S</i></span><span>Not Just Fridays</span></div>
+    <div class="rail-level">
+      <p class="lvl-name" id="lvl-name">Golden Hour</p>
+      <p class="lvl-blurb" id="lvl-blurb"></p>
+    </div>
+    <div class="segs" id="segs" aria-hidden="true"><i><b></b></i><i><b></b></i><i><b></b></i></div>
+    <p class="clock"><span id="clock">28:00</span> <small id="clock-note">left</small></p>
+    <button type="button" class="btn ghost small" id="menu-btn" aria-haspopup="dialog">Menu</button>
+  </header>
+  <div class="table">
+    <div class="stage" id="stage">
+      <div class="under u2" aria-hidden="true"></div>
+      <div class="under u1" aria-hidden="true"></div>
+    </div>
+    <div class="controls">
+      <button type="button" class="btn primary" id="primary">Deal the first card</button>
+      <button type="button" class="btn text is-off" id="skip" disabled>Different card</button>
+    </div>
+  </div>
+  <p class="sr" id="live" aria-live="polite"></p>
+</main>
+
+<!-- end -->
+<main class="screen end" id="end" hidden>
+  <div class="end-in">
+    <span class="week all" aria-hidden="true"><i style="--i:0">M</i><i style="--i:1">T</i><i style="--i:2">W</i><i style="--i:3">T</i><i style="--i:4">F</i><i style="--i:5">S</i><i style="--i:6">S</i></span>
+    <h1>That&rsquo;s the night.</h1>
+    <p class="lede">Not just Fridays means the other six days too. Check in with someone from this room before next week.</p>
+    <p class="stats" id="stats"></p>
+    <div class="end-actions">
+      <button type="button" class="btn primary" id="again">New game</button>
+      <button type="button" class="btn ghost" id="more">Play 10 more minutes</button>
+    </div>
+  </div>
+</main>
+
+<!-- menu -->
+<div class="sheet-wrap" id="sheet" hidden>
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <h2 id="sheet-title">Menu</h2>
+    <ul class="menu">
+      <li><button type="button" id="m-pause"><span class="m-t"></span><span class="m-d">Cards still work while the clock is paused.</span></button></li>
+      <li><button type="button" id="m-deeper"><span class="m-t">Go deeper now</span><span class="m-d"></span></button></li>
+      <li><button type="button" id="m-add"><span class="m-t">Add 5 minutes</span><span class="m-d">More time before the closing card.</span></button></li>
+      <li><button type="button" id="m-closing"><span class="m-t">Deal the closing card</span><span class="m-d">Wrap up now with the last card.</span></button></li>
+    </ul>
+    <ul class="menu">
+      <li><button type="button" id="m-chime"><span class="m-t"></span><span class="m-d">A soft tone when a timed silence ends.</span></button></li>
+      <li id="m-full-row"><button type="button" id="m-full"><span class="m-t">Full screen</span><span class="m-d">Good for a TV or a laptop.</span></button></li>
+      <li><button type="button" id="m-end"><span class="m-t">End this game</span><span class="m-d">Skip the closing card and finish.</span></button></li>
+    </ul>
+    <button type="button" class="btn primary" id="sheet-close">Back to the game</button>
+  </div>
+</div>
+
+<div class="grain" aria-hidden="true"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================= the deck ================= */
+
+  const LEVELS = [null,
+    { name: 'Golden Hour', field: 'amber',
+      blurb: 'Easy questions to warm up the room.',
+      intro: 'Easy ones first. Read the card out loud, then answer. Keep it short so everyone gets a turn.' },
+    { name: 'Blue Hour', field: 'cobalt',
+      blurb: 'Stories, faith and what is really going on.',
+      intro: 'Slow down. These are about your story and your faith. Listen more than you speak.' },
+    { name: 'Lights Low', field: 'dark',
+      blurb: 'The honest ones. Take your time.',
+      intro: 'The honest ones. Take your time. Anyone can pass, and what is said here stays here.' }
+  ];
+
+  const LEAD = {
+    1: ['If Jesus sat down next to you right now and asked…',
+        'If Jesus caught you at the door tonight and asked…',
+        'If Jesus asked you right now…'],
+    2: ['If Jesus asked you right now…',
+        'If Jesus walked you home tonight and asked…',
+        'If Jesus looked across this room at you and asked…'],
+    3: ['If it were just you and Jesus right now, and He asked…',
+        'If Jesus looked you in the eye tonight and asked…',
+        'If Jesus asked you right now…']
+  };
+  const TAIL = ['…what would you say?', '…what would you tell Him?', '…how would you answer?'];
+  const ROOM_LEAD = 'If Jesus asked this whole room…';
+  const VERSE_TAIL = 'If He asked you that tonight, what would you say?';
+  const ECHO = 'Then choose someone else to answer it too.';
+
+  /* Golden Hour */
+  const GOLD = [
+    'What was the best part of your week?',
+    'What made you laugh properly this week?',
+    'Who made your week better, and do they know it?',
+    'What small thing never fails to make your day?',
+    'What song have you had on repeat lately, and why that one?',
+    'Where do you go when you need to breathe?',
+    'What did you want to be when you were seven?',
+    'What are you strangely good at?',
+    'What would you love to learn how to do?',
+    'If tomorrow were completely free, how would you spend it?',
+    'What’s the kindest thing someone has done for you lately?',
+    'What’s one win from this week, however small?',
+    'What are you thankful for that you usually forget to mention?',
+    'What do you love most about Friday nights?',
+    'What do your friends say you never stop talking about?',
+    'What in creation makes you stop and stare?',
+    'What’s the best advice anyone has ever given you?',
+    'Who taught you something this year without knowing it?',
+    'Which family tradition do you hope never ends?',
+    'If I came to your home, what’s the first thing you would show Me?',
+    'If I joined you for supper tonight, what would we be eating?',
+    'What’s the story behind your name?',
+    'What’s on your playlist that would surprise this room?',
+    'What do you do that makes time disappear?',
+    'What have you made or done this year that you’re proud of?',
+    'When did you last feel properly rested?',
+    'Who is easy for you to be yourself around?',
+    'What are you looking forward to in the next month?',
+    'What were you like at ten years old?',
+    'Which teacher, coach or leader do you still think about, and why?',
+    'What’s something simple that everyone should try at least once?',
+    'What do you love about the place where you grew up?'
+  ];
+  /* Golden Hour, whole room */
+  const ROOM = [
+    ['In one word, how has your week been?', 'Go round the circle. One word each.'],
+    ['What’s one thing you’re thankful for today?', 'Go round the circle. One sentence each.'],
+    ['What’s the best thing you’ve eaten this week?', 'Go round the circle. Quick answers.'],
+    ['What’s one thing you’re hoping for this weekend?', 'Go round the circle. One sentence each.'],
+    ['Which day of your week needs Me most?', 'Go round the circle. Name the day.']
+  ];
+  /* Blue Hour. A second item of 1 means: then choose someone else to answer it too. */
+  const BLUE = [
+    'What dream are you still holding on to?',
+    'When did you last feel close to Me?',
+    'What have you been praying about for a long time?',
+    'Who first showed you what I’m like?',
+    'What part of following Me do you find hardest?',
+    ['Where have you seen Me at work this year?', 1],
+    ['Which answered prayer do you still think about?', 1],
+    'What are you worried about that you haven’t said out loud?',
+    'What would you attempt if you knew you couldn’t fail?',
+    'What do you wish people understood about you?',
+    ['When did you feel most alive this year?', 1],
+    'What did you believe about Me as a child that has changed?',
+    'What question would you most like Me to answer?',
+    'Who are you finding hard to love right now? No names needed.',
+    'Where in your week am I easiest to forget?',
+    'What does following Me look like for you on an ordinary Tuesday?',
+    'Who are you praying will come to know Me?',
+    ['What’s the bravest thing you’ve done because of your faith?', 1],
+    'What am I teaching you in this season?',
+    'Which gift of yours could be doing more good for others?',
+    ['Whose faith do you admire, and what is it about them?', 1],
+    ['Which verse or lyric has carried you through something?', 1],
+    'What do you find hard to believe about how I see you?',
+    'What have you had to let go of this year?',
+    'What does rest look like for you, and are you getting any?',
+    'When have you felt most at home in My church?',
+    'Who needs to hear from you this week?',
+    'Which closed door are you now grateful for?',
+    'What are you waiting for, and how is the waiting going?',
+    'What do you do when you can’t hear Me?',
+    'What do you want to be known for?',
+    'What would you tell your thirteen-year-old self about Me?',
+    'What does worship look like for you outside a church service?',
+    'What does your faith look like when no one from church is watching?',
+    'Who sees the real you?',
+    'What’s one thing you’d change about how you spend your time?',
+    'When did someone’s kindness change the direction of your life?',
+    'What are you learning to trust Me with?'
+  ];
+  /* Blue Hour, questions Jesus asked in the Gospels (paraphrased) */
+  const BLUE_V = [
+    { ref: 'John 1:38', ctx: 'Two men began to follow Jesus. He turned round and asked them:',
+      q: 'What are you looking for?' },
+    { ref: 'Matthew 16:15', ctx: 'Jesus asked His closest friends:',
+      q: 'Who do you say that I am?', tail: 'In your own words, who is He to you?' },
+    { ref: 'Mark 6:38', ctx: 'Five thousand people were hungry and the disciples wanted to send them away. Jesus asked:',
+      q: 'How many loaves do you have?', tail: 'What do you have to offer right now, even if it looks small?' },
+    { ref: 'Luke 24:17', ctx: 'On the road to Emmaus, Jesus joined two friends and asked:',
+      q: 'What are you talking about as you walk?', tail: 'What has filled your conversations this week?' },
+    { ref: 'Luke 17:17', ctx: 'Ten men were healed. One came back to say thank you. Jesus asked:',
+      q: 'Where are the other nine?', tail: 'What have you not thanked Him for yet?' },
+    { ref: 'Matthew 6:27', ctx: 'Sitting on a hillside, Jesus asked the crowd:',
+      q: 'Can any of you add a single hour to your life by worrying?', tail: 'Which worry has been taking up your hours?' },
+    { ref: 'Luke 10:36', ctx: 'After telling the story of the good Samaritan, Jesus asked:',
+      q: 'Which of these three was a neighbour to the man?', tail: 'Who is on your road right now, needing you to stop?' },
+    { ref: 'John 21:5', ctx: 'His friends had fished all night and caught nothing. From the beach, Jesus called out:',
+      q: 'Friends, have you caught any fish?', tail: 'Where have you worked hard with little to show for it?' }
+  ];
+  /* Lights Low */
+  const LOW = [
+    'Where do you need Me most right now?',
+    'What are you afraid to ask Me for?',
+    'What have you stopped praying about?',
+    'What are you carrying that was never yours to carry?',
+    'Who do you need to forgive, and what makes it hard?',
+    'What would you do if you weren’t afraid?',
+    'What do you believe about yourself that I never said?',
+    'When did you feel furthest from Me, and what brought you back?',
+    'Which part of your life have you not handed over to Me yet?',
+    'What are you pretending is fine?',
+    'What would it take for you to trust Me with your future?',
+    'What disappointment are you still holding against Me?',
+    'What’s the hardest thing I have asked of you?',
+    'Where have you settled for less than what I have for you?',
+    'What do you need to hear from Me tonight?',
+    'If you fully believed that I love you, what would change tomorrow?',
+    'Who have you been comparing yourself to?',
+    'What have you been running from?',
+    'What do you turn to for comfort before you turn to Me?',
+    'Which yes are you scared to give Me?',
+    'What has been heavy on your heart lately?',
+    'What would you ask this room to pray for, if you were honest?',
+    'Who do you want to tell about Me, and what’s stopping you?',
+    'What do you need to say sorry for?',
+    'Where do you feel like you’re not enough?',
+    'What have I been trying to tell you lately?',
+    'What has changed in you since you started following Me?',
+    'What do you want to be different a year from tonight?',
+    'What do you know in your head but struggle to believe in your heart?',
+    'When did you last let someone see you struggle?',
+    'What’s one step you already know you need to take?',
+    'What do you want people to remember about your life?'
+  ];
+  /* Lights Low, questions Jesus asked in the Gospels (paraphrased) */
+  const LOW_V = [
+    { ref: 'Mark 10:51', ctx: 'A blind man called out from the roadside. Jesus stopped and asked him:',
+      q: 'What do you want Me to do for you?' },
+    { ref: 'John 5:6', ctx: 'A man had been ill for thirty-eight years. Jesus saw him lying there and asked:',
+      q: 'Do you want to be made well?' },
+    { ref: 'Mark 4:40', ctx: 'The storm had just gone quiet. Jesus turned to His friends in the boat and asked:',
+      q: 'Why are you so afraid?', tail: 'What is your storm right now?' },
+    { ref: 'John 21:17', ctx: 'After breakfast on the beach, Jesus asked Peter three times:',
+      q: 'Do you love Me?', tail: 'How would you answer Him tonight?' },
+    { ref: 'Matthew 9:28', ctx: 'Two blind men followed Jesus, asking for mercy. He asked them:',
+      q: 'Do you believe that I am able to do this?', tail: 'What do you struggle to believe He can do?' },
+    { ref: 'Matthew 14:31', ctx: 'Peter walked on the water, then began to sink. Jesus caught him and asked:',
+      q: 'Why did you doubt?', tail: 'Where did you start well and then begin to sink?' },
+    { ref: 'Matthew 26:40', ctx: 'In Gethsemane, Jesus found His friends asleep and asked:',
+      q: 'Could you not keep watch with Me for one hour?', tail: 'What keeps crowding out your time with Him?' },
+    { ref: 'John 6:67', ctx: 'Many of His followers turned back and left. Jesus asked the twelve:',
+      q: 'Do you also want to leave?', tail: 'What has kept you following Him?' },
+    { ref: 'John 13:12', ctx: 'Jesus washed His friends’ feet, sat down again and asked:',
+      q: 'Do you understand what I have done for you?', tail: 'What has He done for you that you are still taking in?' },
+    { ref: 'Luke 6:46', ctx: 'Teaching a crowd of His followers, Jesus asked:',
+      q: 'Why do you call Me Lord, and not do what I say?', tail: 'Where does that question land for you?' },
+    { ref: 'John 20:15', ctx: 'At the empty tomb, the risen Jesus asked Mary:',
+      q: 'Why are you crying? Who are you looking for?', tail: 'What are you looking for right now?' },
+    { ref: 'Mark 8:36', ctx: 'Jesus asked the crowd and His disciples:',
+      q: 'What good is it to gain the whole world and lose your soul?', tail: 'What are you chasing that could cost you too much?' }
+  ];
+  /* Selah: pause and do something. lv = levels it suits, who = room or solo, secs = optional timer */
+  const SELAH = [
+    { t: 'Turn to the person on your left. Tell them one thing you appreciate about them.', lv: [1], who: 'room', secs: 60 },
+    { t: 'Swap seats with someone you haven’t spoken to much tonight.', lv: [1], who: 'room' },
+    { t: 'Choose someone in this room. Tell them something good you see in them.', lv: [1, 2], who: 'solo' },
+    { t: 'On the count of three, everyone says one thing they’re thankful for. All at once. Loudly.', lv: [1], who: 'room' },
+    { t: 'Phones out. Send a message of encouragement to someone who is not in this room.', lv: [1, 2], who: 'room', secs: 120 },
+    { t: 'Thirty seconds of quiet. Thank God for one thing from this week.', lv: [2], who: 'room', secs: 30 },
+    { t: 'Pair up with someone next to you. Ask each other: how can I pray for you this week? Remember the answer.', lv: [2, 3], who: 'room', secs: 120 },
+    { t: 'Open Psalm 23 and read it out loud, slowly. Everyone else, close your eyes and listen.', lv: [2, 3], who: 'solo' },
+    { t: 'Go round the circle. Each person prays one sentence for the person on their left.', lv: [3], who: 'room' },
+    { t: 'One minute of silence. Ask God one question, then listen.', lv: [3], who: 'room', secs: 60 },
+    { t: 'The last person who shared: we are praying for you now. Two or three people pray a short prayer.', lv: [3], who: 'room' },
+    { t: 'Hold your hands out, palms up. In silence, hand God the heaviest thing you’re carrying.', lv: [3], who: 'room', secs: 45 },
+    { t: 'Go round the circle. Name one person outside this room who needs God this week. First names only. Then one person prays for them all.', lv: [2, 3], who: 'room' },
+    { t: 'Tell the room about one person who shaped your faith. Then thank God for them out loud, in one sentence.', lv: [2], who: 'solo' },
+    { t: 'Stand up and stretch. Greet someone you haven’t greeted properly tonight.', lv: [1, 2], who: 'room', secs: 60 },
+    { t: 'Choose one person in this room. Tell them one thing you believe God is doing in them.', lv: [3], who: 'solo' }
+  ];
+  const CLOSERS = [
+    { title: 'Before you go', steps: [
+      'Go round the circle. One sentence each: what are you taking into the rest of your week?',
+      'Then one person prays for the room.'] },
+    { title: 'Not just tonight', steps: [
+      'Each person names one moment in the week ahead where they will need Jesus.',
+      'Then pray for the person on your left. One sentence is enough.'] },
+    { title: 'Carry it out', steps: [
+      'Go round the circle. One word each for how you are leaving tonight.',
+      'Choose one person to check in with before next week. Then one person prays for the room.'] }
+  ];
+  const CLOSE_NOTE = 'If tonight stirred something in you, don’t take it home alone. Talk to a leader before you leave.';
+
+  const CARDS = {};
+  const BY_LEVEL = { 1: [], 2: [], 3: [] };
+  const SELAH_IDS = [];
+  const CLOSE_IDS = [];
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function addQ(c) { CARDS[c.id] = c; BY_LEVEL[c.lv].push(c.id); }
+  GOLD.forEach(function (q, i) { addQ({ id: 'g' + pad(i + 1), kind: 'q', lv: 1, q: q }); });
+  ROOM.forEach(function (r, i) { addQ({ id: 'r' + pad(i + 1), kind: 'q', lv: 1, q: r[0], tail: r[1], room: true }); });
+  BLUE.forEach(function (q, i) {
+    const echo = Array.isArray(q);
+    addQ({ id: 'b' + pad(i + 1), kind: 'q', lv: 2, q: echo ? q[0] : q, echo: echo });
+  });
+  BLUE_V.forEach(function (v, i) { addQ(Object.assign({ id: 'bv' + pad(i + 1), kind: 'q', lv: 2 }, v)); });
+  LOW.forEach(function (q, i) { addQ({ id: 'l' + pad(i + 1), kind: 'q', lv: 3, q: q }); });
+  LOW_V.forEach(function (v, i) { addQ(Object.assign({ id: 'lv' + pad(i + 1), kind: 'q', lv: 3 }, v)); });
+  SELAH.forEach(function (s, i) {
+    const id = 's' + pad(i + 1);
+    CARDS[id] = { id: id, kind: 'selah', t: s.t, lvs: s.lv, room: s.who === 'room', secs: s.secs || 0 };
+    SELAH_IDS.push(id);
+  });
+  CLOSERS.forEach(function (c, i) {
+    const id = 'c' + pad(i + 1);
+    CARDS[id] = { id: id, kind: 'closing', title: c.title, steps: c.steps, room: true };
+    CLOSE_IDS.push(id);
+  });
+  const DECK_SIZE = Object.keys(CARDS).length;
+
+  /* ================= helpers ================= */
+
+  const $ = function (s, r) { return (r || document).querySelector(s); };
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function rand(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; } return h; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function fmt(ms) {
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    const m = Math.floor(s / 60), r = s % 60;
+    return m + ':' + (r < 10 ? '0' : '') + r;
+  }
+  function dur(secs) {
+    if (secs % 60 === 0) { const m = secs / 60; return m + (m === 1 ? ' minute' : ' minutes'); }
+    return secs + ' seconds';
+  }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  const motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function reduced() { return !!(motionQuery && motionQuery.matches); }
+
+  const KEY = 'njf.v1';
+  const store = {
+    get: function () { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } },
+    set: function (o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { /* storage is a convenience only */ } }
+  };
+
+  /* ================= state ================= */
+
+  const CLOSE_MS = 120000;          // time kept back for the closing card
+  const SHARE = [0.27, 0.67];       // where Golden Hour and Blue Hour end, as a share of play time
+  const S = {
+    phase: 'start', minutes: 30, players: 11, names: [], chime: true, seen: new Set(),
+    level: 1, stage: 'intro', started: false, paused: false, acc: 0, since: null,
+    b: [0, 0, 0], total: 0, forceClose: false, played: 0,
+    decks: { 1: null, 2: null, 3: null }, selahUsed: new Set(), untilSelah: 5,
+    order: [], oi: 0, last: null, cur: null, curPlayer: null
+  };
+  let saved = null;       // a game that can be carried on
+  let cardEl = null, introEl = null, lockUntil = 0, endArmed = false, lastFocus = null;
+
+  function named() { return S.names.length >= 2; }
+  function playerCount() { return named() ? S.names.length : S.players; }
+  function elapsed() { return S.acc + (S.since != null ? Date.now() - S.since : 0); }
+  function run() { if (S.since == null) S.since = Date.now(); }
+  function halt() { if (S.since != null) { S.acc += Date.now() - S.since; S.since = null; } }
+  function levelAt(t) { return t < S.b[0] ? 1 : t < S.b[1] ? 2 : 3; }
+  function timeUp() { return S.forceClose || elapsed() >= S.b[2]; }
+
+  function save() {
+    const o = { v: 1, minutes: S.minutes, players: S.players, names: S.names, chime: S.chime, seen: Array.from(S.seen) };
+    if (S.phase === 'play' && S.started) {
+      o.session = { level: S.level, acc: elapsed(), b: S.b, total: S.total, played: S.played,
+        order: S.order, oi: S.oi, last: S.last, minutes: S.minutes, at: Date.now() };
+    }
+    store.set(o);
+    return o;
+  }
+  function validSession(x) {
+    return !!x && [1, 2, 3].indexOf(x.level) >= 0 && Array.isArray(x.b) && x.b.length === 3 &&
+      x.b.every(function (n) { return typeof n === 'number' && isFinite(n); }) &&
+      typeof x.acc === 'number' && typeof x.total === 'number' && typeof x.at === 'number' &&
+      Date.now() - x.at < 6 * 3600 * 1000 && x.acc < x.total;
+  }
+
+  /* ================= elements ================= */
+
+  const root = document.documentElement;
+  const screens = { start: $('#start'), play: $('#play'), end: $('#end') };
+  const stage = $('#stage'), primaryBtn = $('#primary'), skipBtn = $('#skip');
+  const lvlName = $('#lvl-name'), lvlBlurb = $('#lvl-blurb'), clockEl = $('#clock'), clockNote = $('#clock-note');
+  const segs = Array.from(document.querySelectorAll('#segs i'));
+  const sheet = $('#sheet'), live = $('#live');
+  const countOut = $('#count'), countDown = $('#count-down'), countUp = $('#count-up');
+  const nameInput = $('#name-input'), chips = $('#chips'), nameHelp = $('#name-help');
+  const estimateEl = $('#estimate'), arcEl = $('#arc'), fan = $('#fan');
+  const resumeBox = $('#resume'), resumeBtn = $('#resume-btn'), resumeNote = $('#resume-note'), namesSummary = $('#names summary');
+
+  function show(name) {
+    Object.keys(screens).forEach(function (k) { screens[k].hidden = k !== name; });
+    S.phase = name;
+    root.dataset.field = name === 'start' ? 'amber' : name === 'end' ? 'dark' : LEVELS[S.level].field;
+  }
+
+  /* ================= card faces ================= */
+
+  function weekMark() {
+    const w = el('span', 'week');
+    w.setAttribute('aria-hidden', 'true');
+    ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach(function (d, i) { w.append(el('i', i === 4 ? 'fri' : '', d)); });
+    return w;
+  }
+  function leadFor(c) { if (c.ctx) return c.ctx; if (c.room) return ROOM_LEAD; const a = LEAD[c.lv]; return a[hash(c.id) % a.length]; }
+  function tailFor(c) { if (c.tail) return c.tail; if (c.ref) return VERSE_TAIL; return TAIL[hash(c.id + 't') % TAIL.length]; }
+
+  function front(card, player, hint) {
+    const cf = el('div', 'cf');
+    const top = el('div', 'c-top'), body = el('div', 'c-body'), foot = el('div', 'c-foot');
+    if (card.kind === 'q') {
+      cf.classList.add('paper');
+      const lvl = el('span', 'c-level');
+      lvl.append(el('i', 'glyph g' + card.lv), document.createTextNode(LEVELS[card.lv].name));
+      top.append(lvl);
+      if (card.ref) top.append(el('span', 'c-ref', card.ref));
+      body.append(el('p', 'lead', leadFor(card)));
+      const ask = el('p', 'ask', '“' + card.q + '”');
+      ask.dataset.fit = '0.122,0.064';
+      body.append(ask, el('p', 'tail', tailFor(card)));
+      if (card.echo) foot.append(el('span', 'c-hint', ECHO)); else if (hint) foot.append(el('span', 'c-hint', hint));
+      foot.append(el('span', 'c-who', card.room ? 'Everyone' : (player || '')));
+    } else if (card.kind === 'selah') {
+      cf.classList.add('inkface', 'selah');
+      top.append(el('span', 'c-level', 'Pause'));
+      body.append(el('p', 'selah-word', 'Selah.'));
+      const act = el('p', 'act', card.t);
+      act.dataset.fit = '0.074,0.05';
+      body.append(act);
+      if (card.secs) {
+        const b = el('button', 'timer', 'Start ' + dur(card.secs));
+        b.type = 'button'; b.dataset.secs = card.secs;
+        body.append(b);
+      }
+      foot.append(el('span', 'c-who', card.room ? 'Everyone' : (player ? player + ' leads' : 'The reader leads')));
+    } else {
+      cf.classList.add('paper', 'closing');
+      top.append(el('span', 'c-level', 'Closing card'));
+      body.append(el('h3', 'close-title', card.title));
+      const ol = el('ol', 'close-steps');
+      card.steps.forEach(function (s) { ol.append(el('li', null, s)); });
+      ol.dataset.fit = '0.064,0.046';
+      body.append(ol);
+      foot.append(el('span', 'c-hint', CLOSE_NOTE));
+    }
+    cf.append(top, body, foot);
+    return cf;
+  }
+
+  function back(card, player) {
+    const b = el('div', 'cf inkface back');
+    const top = el('div', 'b-top');
+    const who = card.kind === 'closing' ? 'Everyone'
+      : card.room ? (card.kind === 'q' ? 'The whole room' : 'Everyone') : player;
+    if (who) {
+      top.append(el('p', 'b-for', 'For'));
+      const n = el('p', 'b-name', who);
+      const longest = Math.max.apply(null, who.split(/\s+/).map(function (w) { return w.length; }));
+      n.style.fontSize = 'calc(var(--cw) * ' + clamp(1.02 / longest, 0.07, 0.17).toFixed(3) + ')';
+      top.append(n);
+    } else {
+      const m = el('p', 'b-name');
+      m.append('Not Just', el('br'), 'Fridays');
+      top.append(m);
+    }
+    const bot = el('div', 'b-bot');
+    bot.append(weekMark(), el('p', 'b-hint', 'Turn it over'));
+    b.append(top, bot);
+    return b;
+  }
+
+  /* Shrink the main line of a face until the body fits. Nothing is ever clipped. */
+  function fit(scope) {
+    const list = scope.classList && scope.classList.contains('cf') ? [scope] : Array.from(scope.querySelectorAll('.cf'));
+    list.forEach(function (cf) {
+      const body = $('.c-body', cf), t = $('[data-fit]', cf);
+      if (!body || !t) return;
+      const cw = cf.offsetWidth;
+      if (!cw) return;
+      const k = t.dataset.fit.split(',');
+      let size = Math.min(84, cw * parseFloat(k[0]));
+      const min = Math.max(15, cw * parseFloat(k[1]));
+      cf.classList.remove('tight');
+      t.style.fontSize = size + 'px';
+      let guard = 60;
+      while (guard-- > 0 && size > min && body.scrollHeight > body.clientHeight + 1) {
+        size -= 1;
+        t.style.fontSize = size + 'px';
+      }
+      if (body.scrollHeight > body.clientHeight + 1) cf.classList.add('tight');
+    });
+  }
+
+  /* ================= the table ================= */
+
+  function sizeStage() {
+    const w0 = stage.clientWidth, h0 = stage.clientHeight;
+    if (!w0 || !h0) return;
+    let h = Math.min(h0 - 26, 900);
+    let w = Math.min(w0 - 20, 640, h * 0.76);
+    h = Math.min(h, w * 1.62);
+    stage.style.setProperty('--cw', Math.round(w) + 'px');
+    stage.style.setProperty('--ch', Math.round(h) + 'px');
+    primaryBtn.style.setProperty('--bw', Math.max(280, Math.round(w)) + 'px');
+    if (cardEl) fit(cardEl);
+  }
+  function sizeFan() {
+    const w = fan.clientWidth;
+    if (!w) return;
+    const wide = window.matchMedia('(min-width:860px)').matches;
+    const cw = Math.round(wide ? w * 0.53 : w * 0.92);
+    fan.style.setProperty('--cw', cw + 'px');
+    fan.style.setProperty('--ch', Math.round(cw * 1.42) + 'px');
+    fit(fan);
+  }
+
+  function clearStage(animated) {
+    stopSelah(false);
+    if (introEl) { introEl.remove(); introEl = null; }
+    if (cardEl) {
+      const old = cardEl;
+      cardEl = null;
+      old.classList.remove('in');
+      if (animated && !reduced()) {
+        const kill = function () { old.remove(); };
+        old.classList.add('out');
+        old.addEventListener('animationend', kill, { once: true });
+        setTimeout(kill, 480);
+      } else {
+        old.remove();
+      }
+    }
+  }
+
+  function mountCard(card, player, hint) {
+    clearStage(true);
+    const c = el('div', 'card in');
+    const inner = el('div', 'card-inner');
+    const b = back(card, player), f = front(card, player, hint);
+    b.classList.add('face');
+    f.classList.add('face', 'front');
+    inner.append(b, f);
+    c.append(inner);
+    c.addEventListener('animationend', function (e) { if (e.animationName === 'dealIn') c.classList.remove('in'); });
+    c.addEventListener('click', function (e) {
+      const t = e.target.closest ? e.target.closest('.timer') : null;
+      if (t) { toggleSelah(t); return; }
+      if (S.stage === 'back') primary();
+    });
+    stage.append(c);
+    cardEl = c;
+    fit(c);
+  }
+
+  function renderIntro() {
+    clearStage(true);
+    const L = LEVELS[S.level];
+    const box = el('div', 'intro');
+    const h = el('h2', 'intro-name');
+    const words = L.name.split(' ');
+    h.append(words[0], el('br'), words[1]);
+    box.append(h, el('p', 'intro-text', L.intro));
+    if (S.level === 1 && !S.started) {
+      box.append(el('p', 'intro-note', named()
+        ? 'The deck chooses who answers. The clock starts when you deal the first card.'
+        : 'Whoever turns the card answers, then passes the phone on. The clock starts when you deal the first card.'));
+    }
+    stage.append(box);
+    introEl = box;
+  }
+
+  /* ================= dealing ================= */
+
+  function buildDeck(lv) {
+    const all = BY_LEVEL[lv];
+    let unseen = all.filter(function (id) { return !S.seen.has(id); });
+    if (!unseen.length) { all.forEach(function (id) { S.seen.delete(id); }); unseen = all.slice(); }
+    const old = all.filter(function (id) { return unseen.indexOf(id) < 0; });
+    const ids = shuffle(unseen.slice()).concat(shuffle(old));
+    const special = function (id) { return !!(CARDS[id].room || CARDS[id].ref); };
+    for (let i = 1; i < ids.length; i++) {
+      if (special(ids[i]) && special(ids[i - 1])) {
+        let j = i + 1;
+        while (j < ids.length && special(ids[j])) j++;
+        if (j < ids.length) { const t = ids[i]; ids[i] = ids[j]; ids[j] = t; }
+      }
+    }
+    if (lv === 1 && S.played === 0) {            // open the night with a question for the whole room
+      const k = ids.findIndex(function (id) { return CARDS[id].room; });
+      if (k > 0) { ids.unshift(ids.splice(k, 1)[0]); }
+    }
+    return ids;
+  }
+  function drawQuestion() {
+    const lv = S.level;
+    if (!S.decks[lv] || !S.decks[lv].length) S.decks[lv] = buildDeck(lv);
+    const d = S.decks[lv];
+    let id = d.shift();
+    if (S.cur && id === S.cur.id && d.length) { d.push(id); id = d.shift(); }
+    return CARDS[id];
+  }
+  function drawSelah() {
+    const pool = SELAH_IDS.filter(function (id) { return CARDS[id].lvs.indexOf(S.level) >= 0 && !S.selahUsed.has(id); });
+    if (!pool.length) return null;
+    const fresh = pool.filter(function (id) { return !S.seen.has(id); });
+    const from = fresh.length ? fresh : pool;
+    const id = from[Math.floor(Math.random() * from.length)];
+    S.selahUsed.add(id);
+    return CARDS[id];
+  }
+  function nextPlayer() {
+    if (S.oi >= S.order.length) {
+      const o = shuffle(S.names.slice());
+      if (o.length > 1 && o[0] === S.last) o.push(o.shift());
+      S.order = o; S.oi = 0;
+    }
+    S.last = S.order[S.oi++];
+    return S.last;
+  }
+
+  function dealCard(samePlayer) {
+    let card = null;
+    if (!samePlayer && S.untilSelah <= 0) {
+      card = drawSelah();
+      S.untilSelah = rand(4, 6);
+    }
+    if (!card) {
+      card = drawQuestion();
+      if (!samePlayer) S.untilSelah--;
+    }
+    let player = null;
+    if (named()) {
+      if (card.room) {
+        if (samePlayer && S.curPlayer) S.oi = Math.max(0, S.oi - 1);   // their turn comes back
+      } else {
+        player = samePlayer && S.curPlayer ? S.curPlayer : nextPlayer();
+      }
+    }
+    const hint = !named() && !card.room && card.kind === 'q' && S.played < 2 ? 'Answer, then pass the phone on.' : '';
+    S.cur = card; S.curPlayer = player; S.stage = 'back';
+    mountCard(card, player, hint);
+    updateControls(); save();
+  }
+  function dealClosing() {
+    const fresh = CLOSE_IDS.filter(function (id) { return !S.seen.has(id); });
+    const from = fresh.length ? fresh : CLOSE_IDS;
+    const card = CARDS[from[Math.floor(Math.random() * from.length)]];
+    if (!fresh.length) CLOSE_IDS.forEach(function (id) { S.seen.delete(id); });
+    S.seen.add(card.id);
+    S.cur = card; S.curPlayer = null; S.stage = 'back';
+    mountCard(card, null, '');
+    updateControls(); save();
+  }
+  function enterLevel() {
+    root.dataset.field = LEVELS[S.level].field;
+    S.cur = null; S.curPlayer = null; S.stage = 'intro';
+    S.untilSelah = Math.max(S.untilSelah, 2);
+    renderIntro();
+    updateRail(); updateControls(); save();
+  }
+  function flip() {
+    if (S.stage !== 'back' || !cardEl) return;
+    S.stage = 'face';
+    cardEl.classList.add('is-up');
+    if (S.cur.kind !== 'closing') { S.played++; S.seen.add(S.cur.id); }
+    lockUntil = performance.now() + 520;
+    const f = $('.front', cardEl);
+    live.textContent = f ? Array.from(f.querySelectorAll('.lead,.ask,.tail,.act,.close-title,.close-steps li')).map(function (n) { return n.textContent; }).join(' ') : '';
+    updateControls(); save();
+  }
+  function advance() {
+    if (timeUp()) { dealClosing(); return; }
+    const target = Math.max(S.level, levelAt(elapsed()));
+    if (target !== S.level) { S.level = target; enterLevel(); return; }
+    dealCard(false);
+  }
+  function primary() {
+    if (performance.now() < lockUntil) return;
+    if (S.stage === 'intro') {
+      S.started = true;
+      if (!S.paused) run();
+      if (timeUp()) dealClosing(); else dealCard(false);
+      tick();
+      return;
+    }
+    if (S.stage === 'back') { flip(); return; }
+    if (S.cur && S.cur.kind === 'closing') { finish(); return; }
+    advance();
+  }
+  function skip() {
+    if (S.stage !== 'face' || !S.cur || S.cur.kind === 'closing') return;
+    const c = S.cur;
+    S.played = Math.max(0, S.played - 1);
+    S.seen.delete(c.id);
+    if (c.kind === 'q') {
+      const d = S.decks[c.lv] || (S.decks[c.lv] = []);
+      d.splice(Math.min(d.length, rand(3, 6)), 0, c.id);
+    } else {
+      S.untilSelah = 3;
+    }
+    dealCard(true);
+  }
+
+  /* ================= rail, clock, controls ================= */
+
+  function updateRail() {
+    const L = LEVELS[S.level];
+    lvlName.textContent = L.name;
+    lvlBlurb.textContent = L.blurb;
+    tick();
+  }
+  function updateControls() {
+    let label;
+    if (S.stage === 'intro') label = S.started ? 'Deal a card' : 'Deal the first card';
+    else if (S.stage === 'back') label = 'Turn it over';
+    else if (S.cur && S.cur.kind === 'closing') label = 'Finish';
+    else label = timeUp() ? 'Closing card' : 'Next card';
+    if (primaryBtn.textContent !== label) primaryBtn.textContent = label;
+    const canSkip = S.stage === 'face' && S.cur && S.cur.kind !== 'closing';
+    skipBtn.classList.toggle('is-off', !canSkip);
+    skipBtn.disabled = !canSkip;
+    screens.play.dataset.stage = S.stage;
+  }
+  function tick() {
+    if (S.phase !== 'play') return;
+    const t = elapsed();
+    clockEl.textContent = fmt(S.total - t);
+    clockNote.textContent = S.paused ? 'paused' : 'left';
+    const starts = [0, S.b[0], S.b[1]], ends = S.b;
+    segs.forEach(function (seg, i) {
+      const len = Math.max(1, ends[i] - starts[i]);
+      seg.style.flexGrow = String(Math.max(0.04, len / Math.max(1, S.b[2])));
+      seg.firstElementChild.style.transform = 'scaleX(' + clamp((t - starts[i]) / len, 0, 1).toFixed(4) + ')';
+    });
+    if (S.stage === 'face') updateControls();
+  }
+  setInterval(tick, 500);
+
+  /* ================= Selah timer and chime ================= */
+
+  let selah = null, actx = null, tones = [];
+  function chime(after) {
+    if (!S.chime) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      actx = actx || new AC();
+      if (actx.state === 'suspended') { const p = actx.resume(); if (p && p.catch) p.catch(function () { /* no sound is fine */ }); }
+      const t0 = actx.currentTime + after;
+      [[587.33, 0], [880, 0.26]].forEach(function (n) {
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = 'sine'; o.frequency.value = n[0];
+        g.gain.setValueAtTime(0.0001, t0 + n[1]);
+        g.gain.exponentialRampToValueAtTime(0.2, t0 + n[1] + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + n[1] + 1.6);
+        o.connect(g); g.connect(actx.destination);
+        o.start(t0 + n[1]); o.stop(t0 + n[1] + 1.7);
+        tones.push(o);
+      });
+    } catch (e) { /* no sound is fine */ }
+  }
+  function hush() { tones.forEach(function (o) { try { o.stop(); } catch (e) { /* already ended */ } }); tones = []; }
+  function paintSelah() {
+    if (!selah) return;
+    const left = selah.end - Date.now();
+    if (left <= 0) {
+      const b = selah.btn;
+      clearInterval(selah.id); selah = null; tones = [];
+      b.textContent = 'Amen.'; b.disabled = true; b.classList.add('done');
+      return;
+    }
+    selah.btn.textContent = fmt(left) + ' left. Tap to stop';
+  }
+  function toggleSelah(btn) {
+    if (btn.disabled) return;
+    if (selah) { stopSelah(true); return; }
+    const secs = +btn.dataset.secs;
+    selah = { btn: btn, label: btn.textContent, end: Date.now() + secs * 1000, id: setInterval(paintSelah, 250) };
+    chime(secs);
+    paintSelah();
+  }
+  function stopSelah(restore) {
+    if (!selah) return;
+    clearInterval(selah.id); hush();
+    if (restore) selah.btn.textContent = selah.label;
+    selah = null;
+  }
+
+  /* ================= start, finish ================= */
+
+  let wake = null;
+  function keepAwake() {
+    try {
+      if (navigator.wakeLock && document.visibilityState === 'visible') {
+        navigator.wakeLock.request('screen').then(function (w) { wake = w; }).catch(function () { /* optional */ });
+      }
+    } catch (e) { /* optional */ }
+  }
+  document.addEventListener('visibilitychange', function () { if (S.phase === 'play') keepAwake(); });
+
+  function startGame(session) {
+    S.decks = { 1: null, 2: null, 3: null };
+    S.selahUsed = new Set();
+    S.untilSelah = rand(4, 6);
+    S.cur = null; S.curPlayer = null; S.forceClose = false; S.paused = false; S.since = null;
+    if (session) {
+      S.level = session.level; S.acc = session.acc; S.b = session.b.slice(); S.total = session.total;
+      S.played = session.played || 0; S.started = true;
+      S.order = Array.isArray(session.order) ? session.order.filter(function (n) { return S.names.indexOf(n) >= 0; }) : [];
+      S.oi = Math.min(session.oi || 0, S.order.length); S.last = session.last || null;
+    } else {
+      const play = S.minutes * 60000 - CLOSE_MS;
+      S.level = 1; S.acc = 0; S.started = false; S.played = 0;
+      S.b = [play * SHARE[0], play * SHARE[1], play];
+      S.total = S.minutes * 60000;
+      S.order = []; S.oi = 0; S.last = null;
+    }
+    saved = null;
+    show('play');
+    sizeStage();
+    S.stage = 'intro';
+    renderIntro();
+    updateRail(); updateControls();
+    keepAwake();
+    save();
+    primaryBtn.focus({ preventScroll: true });
+  }
+  function finish() {
+    halt();
+    clearStage(false);
+    const mins = Math.max(1, Math.round(elapsed() / 60000));
+    $('#stats').textContent = plural(S.played, 'card', 'cards') + '. ' + plural(mins, 'minute', 'minutes') + '. ' + plural(playerCount(), 'person', 'people') + '.';
+    show('end');
+    save();
+    if (wake) { try { wake.release(); } catch (e) { /* optional */ } wake = null; }
+    $('#again').focus({ preventScroll: true });
+  }
+  function playOn() {
+    const t = elapsed();
+    S.b[2] = t + 10 * 60000;
+    S.b[1] = Math.min(S.b[1], t); S.b[0] = Math.min(S.b[0], S.b[1]);
+    S.total = S.b[2] + CLOSE_MS;
+    S.forceClose = false; S.level = 3; S.paused = false;
+    show('play');
+    sizeStage();
+    run();
+    dealCard(false);
+    updateRail();
+    keepAwake();
+  }
+
+  /* ================= menu ================= */
+
+  function setMenuText(id, title, desc) {
+    const b = $('#' + id);
+    $('.m-t', b).textContent = title;
+    if (desc != null) $('.m-d', b).textContent = desc;
+  }
+  function refreshMenu() {
+    const closing = !!(S.cur && S.cur.kind === 'closing');
+    setMenuText('m-pause', S.paused ? 'Start the clock again' : 'Pause the clock');
+    $('#m-pause').disabled = !S.started;
+    setMenuText('m-deeper', 'Go deeper now', S.level < 3 ? 'Move on to ' + LEVELS[S.level + 1].name + '.' : 'You are already at Lights Low.');
+    $('#m-deeper').disabled = S.level >= 3 || closing;
+    $('#m-add').disabled = closing;
+    $('#m-closing').disabled = closing;
+    setMenuText('m-chime', 'Chime after a silence: ' + (S.chime ? 'on' : 'off'));
+    setMenuText('m-end', endArmed ? 'Tap again to end this game' : 'End this game');
+    $('#m-full-row').hidden = !document.fullscreenEnabled;
+    setMenuText('m-full', document.fullscreenElement ? 'Leave full screen' : 'Full screen');
+  }
+  function openMenu() {
+    endArmed = false;
+    refreshMenu();
+    lastFocus = document.activeElement;
+    sheet.hidden = false;
+    const first = sheet.querySelector('.menu button:not([disabled])');
+    if (first) first.focus({ preventScroll: true });
+  }
+  function closeMenu() {
+    sheet.hidden = true;
+    endArmed = false;
+    if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+  }
+  $('#menu-btn').addEventListener('click', openMenu);
+  $('#scrim').addEventListener('click', closeMenu);
+  $('#sheet-close').addEventListener('click', closeMenu);
+  sheet.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { e.preventDefault(); closeMenu(); return; }
+    if (e.key !== 'Tab') return;
+    const f = Array.from(sheet.querySelectorAll('button:not([disabled])')).filter(function (b) { return b.offsetParent !== null; });
+    if (!f.length) return;
+    const a = f[0], z = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
+    else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+  });
+  $('#m-pause').addEventListener('click', function () {
+    S.paused = !S.paused;
+    if (S.paused) halt(); else run();
+    refreshMenu(); tick(); save();
+  });
+  $('#m-deeper').addEventListener('click', function () {
+    if (S.level >= 3) return;
+    const t = elapsed();
+    S.b[S.level - 1] = Math.min(S.b[S.level - 1], t);
+    S.level++;
+    closeMenu();
+    enterLevel();
+  });
+  $('#m-add').addEventListener('click', function () {
+    const add = 5 * 60000;
+    if (S.level === 1) { S.b[0] += add * SHARE[0]; S.b[1] += add * SHARE[1]; }
+    else if (S.level === 2) { S.b[1] += add * 0.5; }
+    S.b[2] += add; S.total += add; S.forceClose = false;
+    closeMenu(); tick(); updateControls(); save();
+  });
+  $('#m-closing').addEventListener('click', function () {
+    S.forceClose = true;
+    if (!S.started) { S.started = true; if (!S.paused) run(); }
+    closeMenu();
+    dealClosing();
+  });
+  $('#m-chime').addEventListener('click', function () {
+    S.chime = !S.chime;
+    if (!S.chime) hush();
+    refreshMenu(); save();
+  });
+  $('#m-full').addEventListener('click', function () {
+    try {
+      const p = document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen();
+      if (p && p.then) p.then(refreshMenu, function () { $('#m-full-row').hidden = true; });
+    } catch (e) { $('#m-full-row').hidden = true; }
+  });
+  $('#m-end').addEventListener('click', function () {
+    if (!endArmed) { endArmed = true; refreshMenu(); return; }
+    sheet.hidden = true; endArmed = false;
+    finish();
+  });
+
+  /* ================= play controls ================= */
+
+  primaryBtn.addEventListener('click', primary);
+  skipBtn.addEventListener('click', skip);
+  document.addEventListener('keydown', function (e) {
+    if (S.phase !== 'play' || !sheet.hidden) return;
+    const tag = e.target && e.target.tagName;
+    if (tag === 'INPUT') return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); primary(); return; }
+    if (tag === 'BUTTON' || tag === 'SUMMARY') return;
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); primary(); }
+  });
+  $('#again').addEventListener('click', function () {
+    S.started = false;
+    saved = null;
+    save();
+    renderStart();
+    show('start');
+    screens.start.scrollTop = 0;
+  });
+  $('#more').addEventListener('click', playOn);
+
+  /* ================= start screen ================= */
+
+  function estimate() {
+    const cards = Math.round((S.minutes - 2) / 1.5);
+    const turns = cards * 0.8 / playerCount();
+    let each;
+    if (turns < 0.75) each = 'Not everyone will get a turn, so keep answers short.';
+    else if (turns < 1.2) each = 'About 1 turn each.';
+    else if (turns < 1.75) each = '1 to 2 turns each.';
+    else if (turns < 2.4) each = 'About 2 turns each.';
+    else each = 'About ' + Math.round(turns) + ' turns each.';
+    return 'Roughly ' + cards + ' cards. ' + each;
+  }
+  function renderArc() {
+    const play = S.minutes - 2;
+    const a = Math.round(play * SHARE[0]), b = Math.round(play * (SHARE[1] - SHARE[0])), c = play - a - b;
+    const rows = [
+      ['c1', LEVELS[1].name, LEVELS[1].blurb, a],
+      ['c2', LEVELS[2].name, LEVELS[2].blurb, b],
+      ['c3', LEVELS[3].name, LEVELS[3].blurb, c],
+      ['c4', 'Closing card', 'One last card for the whole room, then prayer.', 2]
+    ];
+    arcEl.textContent = '';
+    rows.forEach(function (r) {
+      const li = el('li');
+      li.append(el('span', 'arc-chip ' + r[0]), el('span', 'arc-name', r[1]), el('span', 'arc-min', r[3] + ' min'), el('span', 'arc-blurb', r[2]));
+      arcEl.append(li);
+    });
+  }
+  function syncCount() {
+    const n = named();
+    countOut.textContent = String(playerCount());
+    countDown.disabled = n || S.players <= 2;
+    countUp.disabled = n || S.players >= 30;
+    namesSummary.textContent = S.names.length ? plural(S.names.length, 'name', 'names') + ' added. Edit names' : 'Add names so the deck picks who answers';
+    nameHelp.textContent = S.names.length === 1
+      ? 'Add at least one more name, or the deck will not pick people.'
+      : n ? S.names.length + ' names added. The deck gives everyone a turn before anyone goes twice.'
+        : 'Optional. Type a name and press Add. You can also paste a list separated by commas.';
+  }
+  function renderChips() {
+    chips.textContent = '';
+    S.names.forEach(function (n, i) {
+      const li = el('li', 'chip');
+      const x = el('button', 'chip-x', '×');
+      x.type = 'button';
+      x.setAttribute('aria-label', 'Remove ' + n);
+      x.addEventListener('click', function () { S.names.splice(i, 1); afterNames(); nameInput.focus(); });
+      li.append(el('span', null, n), x);
+      chips.append(li);
+    });
+  }
+  function afterNames() { renderChips(); syncCount(); estimateEl.textContent = estimate(); save(); }
+  function addNames(raw) {
+    raw.split(/[,;\n]+/).forEach(function (s) {
+      const n = s.trim().replace(/\s+/g, ' ').slice(0, 18);
+      if (!n || S.names.length >= 30) return;
+      if (S.names.some(function (x) { return x.toLowerCase() === n.toLowerCase(); })) return;
+      S.names.push(n);
+    });
+    afterNames();
+  }
+  function takeName() { if (nameInput.value.trim()) { addNames(nameInput.value); } nameInput.value = ''; }
+  function renderStart() {
+    const r = $('#mins-' + S.minutes);
+    if (r) r.checked = true;
+    renderChips(); syncCount(); renderArc();
+    estimateEl.textContent = estimate();
+    const can = validSession(saved);
+    resumeBox.hidden = !can;
+    if (can) {
+      const left = Math.max(1, Math.round((saved.total - saved.acc) / 60000));
+      resumeNote.textContent = 'You were in ' + LEVELS[saved.level].name + ' with about ' + plural(left, 'minute', 'minutes') + ' left.';
+    }
+  }
+  Array.from(document.querySelectorAll('input[name="mins"]')).forEach(function (r) {
+    r.addEventListener('change', function () { if (r.checked) { S.minutes = +r.value; renderArc(); estimateEl.textContent = estimate(); save(); } });
+  });
+  countDown.addEventListener('click', function () { S.players = clamp(S.players - 1, 2, 30); afterNames(); });
+  countUp.addEventListener('click', function () { S.players = clamp(S.players + 1, 2, 30); afterNames(); });
+  $('#name-add').addEventListener('click', function () { takeName(); nameInput.focus(); });
+  nameInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); takeName(); } });
+  nameInput.addEventListener('input', function () { if (/[,;]/.test(nameInput.value)) takeName(); });
+  $('#setup').addEventListener('submit', function (e) { e.preventDefault(); takeName(); startGame(null); });
+  resumeBtn.addEventListener('click', function () {
+    if (!validSession(saved)) { renderStart(); return; }
+    if ([20, 30, 40].indexOf(saved.minutes) >= 0) S.minutes = saved.minutes;
+    startGame(saved);
+  });
+
+  function buildFan() {
+    const picks = [[CARDS.g22, 'Lerato', 's1'], [CARDS.lv01, 'Sipho', 's2'], [CARDS.s10, null, 's3']];
+    picks.forEach(function (p) {
+      const f = front(p[0], p[1], '');
+      f.classList.add('sample', p[2]);
+      const t = $('.timer', f);
+      if (t) { t.tabIndex = -1; t.disabled = true; }
+      fan.append(f);
+    });
+  }
+
+  /* ================= boot ================= */
+
+  function boot(hot) {
+    const o = store.get();
+    if ([20, 30, 40].indexOf(o.minutes) >= 0) S.minutes = o.minutes;
+    if (Number.isInteger(o.players) && o.players >= 2 && o.players <= 30) S.players = o.players;
+    if (Array.isArray(o.names)) S.names = o.names.filter(function (n) { return typeof n === 'string' && n; }).slice(0, 30);
+    if (typeof o.chime === 'boolean') S.chime = o.chime;
+    if (Array.isArray(o.seen)) S.seen = new Set(o.seen.filter(function (id) { return !!CARDS[id]; }));
+    saved = validSession(o.session) ? o.session : null;
+
+    $('#fine').textContent = 'The deck has ' + DECK_SIZE + ' cards and reshuffles when it runs out. Every few cards it deals a Selah card, which asks the room to pause and do something together. Cards with a verse use a question Jesus asked in the Gospels, in a paraphrase. This device remembers which cards it has shown, so new ones come first next time.';
+    buildFan();
+    renderStart();
+
+    if (window.ResizeObserver) {
+      new ResizeObserver(sizeStage).observe(stage);
+      new ResizeObserver(sizeFan).observe(fan);
+    } else {
+      window.addEventListener('resize', function () { sizeStage(); sizeFan(); });
+    }
+    sizeFan();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () { sizeFan(); if (cardEl) fit(cardEl); });
+    }
+
+    const hs = hot && hot.session;
+    if (validSession(hs)) {
+      if (Array.isArray(hot.names)) S.names = hot.names;
+      startGame(hs);
+    } else {
+      show('start');
+    }
+  }
+
+  let hotApi = null;
+  try { hotApi = window.claude && window.claude.hot ? window.claude.hot : null; } catch (e) { hotApi = null; }
+  try {
+    if (hotApi && hotApi.snapshot) hotApi.snapshot(function () { return save(); });
+    if (hotApi && hotApi.ready) hotApi.ready(boot); else boot((hotApi && hotApi.data) || {});
+  } catch (e) {
+    boot({});
+  }
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function () {}); }); }
+</script>
+</body>
+</html>
